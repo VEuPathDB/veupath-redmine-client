@@ -16,8 +16,8 @@
 
 
 import argparse
+from typing import Dict, List
 from .client import VeupathRedmineClient
-from .issue_utils import IssueUtils
 from .genome import Genome
 
 supported_team = "Data Processing (EBI)"
@@ -41,11 +41,44 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     return genomes
 
 
-def check_genome_issues(issues) -> None:
+def categorize_genome_issues(issues) -> Dict[str, List[Genome]]:
+    validity: Dict[str, List[Genome]] = {
+        'valid': [],
+        'invalid': [],
+    }
+    operations: Dict[str, List[Genome]] = {}
     for issue in issues:
         genome = Genome(issue)
         genome.parse()
-        print(f"{genome}")
+
+        if genome.errors:
+            validity['invalid'].append(genome)
+        else:
+            validity['valid'].append(genome)
+        
+        for key in genome.operations:
+            if key in operations:
+                operations[key].append(genome)
+            else:
+                operations[key] = [genome]
+    
+    categories = {**validity, **operations}
+    return categories
+
+
+def summarize_genome_issues(issues) -> None:
+    categories = categorize_genome_issues(issues)
+    for key in categories:
+        print(f"{len(categories[key])} {key}")
+
+
+def check_genome_issues(issues) -> None:
+    categories = categorize_genome_issues(issues)
+    for key in categories:
+        print(f"{len(categories[key])} {key}:")
+        genomes = categories[key]
+        for genome in genomes:
+            print(genome.short_str())
 
 
 def main():
@@ -57,9 +90,8 @@ def main():
     # Choice
     parser.add_argument('--action',
                         choices=[
-                            'list',
                             'check',
-                            'count',
+                            'summary',
                         ],
                         required=True,
                         help='What to do with the list of genome issues')
@@ -75,13 +107,10 @@ def main():
 
     issues = get_genome_issues(redmine)
 
-    if args.action == "count":
-        pass
-    if args.action == "list":
-        IssueUtils.print_issues(issues, "genomes datasets")
+    if args.action == "summary":
+        summarize_genome_issues(issues)
     elif args.action == "check":
         check_genome_issues(issues)
-        pass
 
 
 if __name__ == "__main__":
