@@ -86,6 +86,12 @@ class IssueUtils:
 
         return f"{assignee}\t{team}\t{build}\t{component}\t'{datatype}'\t{issue.id}\t({title})"
 
+    @staticmethod
+    def print_issues(issues: list, description: str) -> None:
+        print(f"{len(issues)} issues for {description}")
+        for issue in issues:
+            print(IssueUtils.tostr_full(issue))
+
 
 class RedmineFilter:
     """Simple object to store a list of filters to use for Redmine filtering"""
@@ -179,23 +185,6 @@ class VeupathRedmineClient(RedmineClient):
         version_id = [version.id for version in versions if version.name == version_name]
         self.add_filter("build", version_id)
 
-    def get_all_genomes(self):
-        """
-        Query Redmine to get all genomes, with or without genes
-        """
-        datatypes = (
-            "Genome sequence and Annotation",
-            "Assembled genome sequence without annotation",
-        )
-        all_issues = []
-        for datatype in datatypes:
-            issues = self.get_issues({"datatype": datatype})
-            print(f"{len(issues)} issues for {datatype} found")
-            all_issues = all_issues + issues
-        
-        print(f"{len(all_issues)} issues found")
-        return all_issues
-
     
 def main():
     # Parse command line arguments
@@ -203,23 +192,11 @@ def main():
     
     parser.add_argument('--key', type=str, required=True,
                         help='Redmine authentification key')
-    parser.add_argument('--output_dir', type=str,
-                        help='Output_dir')
-    # Choice
-    parser.add_argument('--get',
-                        choices=[
-                            'genomes',
-                            'rnaseq',
-                        ],
-                        required=True,
-                        help='Get genomes datasets, rnaseq datasets, or other missed datasets)')
     # Optional
     parser.add_argument('--build', type=int,
                         help='Restrict to a given build')
-    parser.add_argument('--user_id', type=str,
-                        help='Restrict to a given user')
-    parser.add_argument('--current_abbrevs', type=str,
-                        help='File that contains the list of current organism_abbrevs')
+    parser.add_argument('--list', action='store_true', dest='list',
+                        help='Print a detailed list of all the issues')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -227,23 +204,11 @@ def main():
     if args.build:
         redmine.set_build(args.build)
     
-    if args.get == 'genomes':
-        redmine.add_filter("team", "Data Processing (EBI)")
-
-        redmine.add_filter("datatype", "Genome sequence and Annotation")
-        full_genomes = redmine.get_issues()
-
-        redmine.add_filter("datatype", "Assembled genome sequence without annotation")
-        assembly_genomes = redmine.get_issues()
-
-        print(f"{len(full_genomes)} genomes with annotation issues found")
-        print(f"{len(assembly_genomes)} genomes without annotation issues found")
-
-    if args.get == 'rnaseq':
-        redmine.add_filter("team", "Data Processing (EBI)")
-        redmine.add_filter("datatype", "RNA-seq")
-        rnaseqs = redmine.get_issues()
-        print(f"{len(rnaseqs)} RNA-Seq datasets issues found")
+    redmine.add_filter("team", "Data Processing (EBI)")
+    all_issues = redmine.get_issues()
+    print(f"{len(all_issues)} issues selected")
+    if args.list:
+        IssueUtils.print_issues(all_issues, "All issues")
 
 
 if __name__ == "__main__":
