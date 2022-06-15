@@ -17,9 +17,12 @@
 
 from redminelib import Redmine, exceptions
 import argparse
+import pprint
 
 
 class IssueUtils:
+    max_title = 60
+    max_title_full = 100
 
     @staticmethod
     def get_custom_fields(issue) -> dict:
@@ -33,16 +36,56 @@ class IssueUtils:
             for c in issue.custom_fields:
                 cfs[c["name"]] = c["value"]
         except exceptions.ResourceAttrError:
-            print(f"can't get custom fields for {issue.id}")
+            pass
         return cfs
     
     @staticmethod
     def tostr(issue) -> str:
-        max_title = 60
+        max_title = IssueUtils.max_title
         title = issue.subject
         if len(title) > max_title:
             title = title[0:max_title] + "..."
         return f"{issue.id} ({title})"
+
+    @staticmethod
+    def tostr_full(issue) -> str:
+        max_title = IssueUtils.max_title_full
+        title = issue.subject
+        if len(title) > max_title:
+            title = title[0:max_title] + "..."
+        
+        cfs = IssueUtils.get_custom_fields(issue)
+
+        build = "(no build)"
+        team = "(no team)"
+        component = "(no component)"
+        assignee = "(no assignee)"
+        datatype = "(no datatype)"
+
+        try:
+            if cfs["VEuPathDB Team"]:
+                team = cfs["VEuPathDB Team"]
+        except KeyError:
+            pass
+
+        try:
+            component = ",".join(cfs["Component DB"])
+        except KeyError:
+            pass
+
+        try:
+            if cfs["DataType"]:
+                datatype = cfs["DataType"]
+        except KeyError:
+            pass
+
+        try:
+            assignee = issue.assigned_to["name"]
+            build = issue.fixed_version
+        except exceptions.ResourceAttrError:
+            pass
+
+        return f"{assignee}\t{team}\t{build}\t{component}\t'{datatype}'\t{issue.id}\t({title})"
 
 
 class RedmineFilter:
@@ -154,6 +197,7 @@ def main():
                         choices=[
                             'genomes',
                             'rnaseq',
+                            'missed_datasets',
                             'missed_status',
                             'missed_team',
                             'missed_assignee'
@@ -207,7 +251,7 @@ def main():
             if "DataType" in cfs:
                 datatype = cfs["DataType"]
                 if datatype not in exclude_datasets:
-                    print(f"Unsupported datatype: {datatype} in {IssueUtils.tostr(issue)}")
+                    print(f"No {datatype}? in {IssueUtils.tostr_full(issue)}")
 
     if args.get == 'missed_status':
         """Status is set to EBI, but not the team"""
@@ -219,7 +263,7 @@ def main():
             if "VEuPathDB Team" in cfs:
                 team = cfs["VEuPathDB Team"]
                 if team != "Data Processing (EBI)":
-                    print(f"For EBI team? {IssueUtils.tostr(issue)}")
+                    print(f"For EBI team? {IssueUtils.tostr_full(issue)}")
 
     if args.get == 'missed_assignee':
         """Status is set to a given assignee, but not the team"""
@@ -232,11 +276,11 @@ def main():
         for issue in all_issues:
             cfs = IssueUtils.get_custom_fields(issue)
             if not cfs:
-                print(f"Non standard issue: {issue.id} ({issue.subject})")
+                print(f"Non standard? " + IssueUtils.tostr_full(issue))
             if "VEuPathDB Team" in cfs:
                 team = cfs["VEuPathDB Team"]
                 if team != "Data Processing (EBI)":
-                    print(f"For EBI team? {issue.id} ({issue.subject})")
+                    print(f"For EBI team? " + IssueUtils.tostr_full(issue))
 
 
 if __name__ == "__main__":
