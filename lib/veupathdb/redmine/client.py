@@ -15,82 +15,9 @@
 # limitations under the License.
 
 
-from redminelib import Redmine, exceptions
+from redminelib import Redmine
+from .issue_utils import IssueUtils
 import argparse
-
-
-class IssueUtils:
-    max_title = 60
-    max_title_full = 100
-
-    @staticmethod
-    def get_custom_fields(issue) -> dict:
-        """
-        Put all Redmine custom fields in a dict instead of an array
-        Return a dict
-        """
-        
-        cfs = {}
-        try:
-            for c in issue.custom_fields:
-                cfs[c["name"]] = c["value"]
-        except exceptions.ResourceAttrError:
-            pass
-        return cfs
-    
-    @staticmethod
-    def tostr(issue) -> str:
-        max_title = IssueUtils.max_title
-        title = issue.subject
-        if len(title) > max_title:
-            title = title[0:max_title] + "..."
-        return f"{issue.id} ({title})"
-
-    @staticmethod
-    def tostr_full(issue) -> str:
-        max_title = IssueUtils.max_title_full
-        title = issue.subject
-        if len(title) > max_title:
-            title = title[0:max_title] + "..."
-        
-        cfs = IssueUtils.get_custom_fields(issue)
-
-        build = "(no build)"
-        team = "(no team)"
-        component = "(no component)"
-        assignee = "(no assignee)"
-        datatype = "(no datatype)"
-
-        try:
-            if cfs["VEuPathDB Team"]:
-                team = cfs["VEuPathDB Team"]
-        except KeyError:
-            pass
-
-        try:
-            component = ",".join(cfs["Component DB"])
-        except KeyError:
-            pass
-
-        try:
-            if cfs["DataType"]:
-                datatype = cfs["DataType"]
-        except KeyError:
-            pass
-
-        try:
-            assignee = issue.assigned_to["name"]
-            build = issue.fixed_version
-        except exceptions.ResourceAttrError:
-            pass
-
-        return f"{assignee}\t{team}\t{build}\t{component}\t'{datatype}'\t{issue.id}\t({title})"
-
-    @staticmethod
-    def print_issues(issues: list, description: str) -> None:
-        print(f"{len(issues)} issues for {description}")
-        for issue in issues:
-            print(IssueUtils.tostr_full(issue))
 
 
 class RedmineFilter:

@@ -16,11 +16,11 @@
 
 
 import argparse
-from .client import IssueUtils, VeupathRedmineClient
+from .client import VeupathRedmineClient
+from .issue_utils import IssueUtils
 
 supported_datatypes = (
     "RNA-seq",
-    #"DNA-seq",
 )
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20

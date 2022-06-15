@@ -16,7 +16,8 @@
 
 
 import argparse
-from .client import IssueUtils, VeupathRedmineClient
+from .client import VeupathRedmineClient
+from .issue_utils import IssueUtils
 
 supported_datatypes = (
     "Genome sequence and Annotation",
