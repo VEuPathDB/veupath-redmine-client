@@ -16,6 +16,7 @@
 
 
 from redminelib import Redmine
+from .veupath_params import VeupathParams
 from .issue_utils import IssueUtils
 import argparse
 
@@ -49,17 +50,11 @@ class RedmineFilter:
 class VeupathRedmineFilter(RedmineFilter):
     """Define Veupath specific fields to filter"""
 
-    vp_field_map = {
-        "status": "status_name",
-        "build": "fixed_version_id",
-        # Custom fields
-        "team": "cf_17",
-        "datatype": "cf_94",
-    }
-
     def __init__(self) -> None:
         super().__init__()
-        self.field_map = {**self.field_map, **self.vp_field_map}
+
+        supported_fields = VeupathParams.issues_fields
+        self.field_map = {**self.field_map, **supported_fields}
     
 
 class RedmineClient:
@@ -97,12 +92,11 @@ class RedmineClient:
 
 class VeupathRedmineClient(RedmineClient):
     """More specific Redmine client for VEuPathDB project"""
-    veupath_redmine_url = 'https://redmine.apidb.org'
-    veupath_project_id = 1976
 
     def __init__(self, key: str) -> None:
-        url = self.veupath_redmine_url
-        super().__init__(url, key, self.veupath_project_id)
+        url = VeupathParams.redmine_url
+        project_id = VeupathParams.project_id
+        super().__init__(url, key, project_id)
         self.filter = VeupathRedmineFilter()
 
     def set_build(self, build: int) -> None:
