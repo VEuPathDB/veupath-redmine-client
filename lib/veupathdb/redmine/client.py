@@ -17,7 +17,6 @@
 
 from redminelib import Redmine, exceptions
 import argparse
-import pprint
 
 
 class IssueUtils:
@@ -89,14 +88,10 @@ class IssueUtils:
 
 
 class RedmineFilter:
+    """Simple object to store a list of filters to use for Redmine filtering"""
 
-    field_map = {
-        "status": "status_name",
-        "build": "fixed_version_id",
-        # Custom fields
-        "team": "cf_17",
-        "datatype": "cf_94",
-    }
+    """This is to map simple key names to actual Redmine field names"""
+    field_map: dict = {}
 
     def __init__(self) -> None:
         self.fields: dict = {}
@@ -118,13 +113,29 @@ class RedmineFilter:
         del self.fields[key]
 
 
-class RedmineClient:
-    default_project_id = 1976
+class VeupathRedmineFilter(RedmineFilter):
+    """Define Veupath specific fields to filter"""
 
-    def __init__(self, url: str, key: str) -> None:
+    vp_field_map = {
+        "status": "status_name",
+        "build": "fixed_version_id",
+        # Custom fields
+        "team": "cf_17",
+        "datatype": "cf_94",
+    }
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.field_map = {**self.field_map, **self.vp_field_map}
+    
+
+class RedmineClient:
+    """Wrapper around Redmine python to set up basic interactions"""
+
+    def __init__(self, url: str, key: str, project_id: int) -> None:
         self.redmine = Redmine(url, key=key)
         self.filter = RedmineFilter()
-        self.project_id = self.default_project_id
+        self.project_id = project_id
     
     def get_custom_fields(self):
         rs_fields = self.redmine.custom_field.all()
@@ -138,16 +149,12 @@ class RedmineClient:
         for field_name, field_value in fields:
             self.add_filter(field_name, field_value)
 
-    def set_build(self, build: int) -> None:
-        redmine = self.redmine
-        versions = redmine.version.filter(project_id=self.project_id)
-        version_name = "Build " + str(build)
-        version_id = [version.id for version in versions if version.name == version_name]
-        self.add_filter("build", version_id)
+    def remove_filter(self, field_name) -> None:
+        self.filter.unset_field(field_name)
 
     def get_issues(self):
         """
-        Get EBI issues from Redmine using the defined filter
+        Get issues from Redmine using the defined filter
         Return a list of issues
         """
 
@@ -156,15 +163,21 @@ class RedmineClient:
     
 
 class VeupathRedmineClient(RedmineClient):
-    url = 'https://redmine.apidb.org'
-    insdc_pattern = r'^GC[AF]_\d{9}(\.\d+)?$'
-    accession_api_url = "https://www.ebi.ac.uk/ena/browser/api/xml/%s"
-    veupathdb_id = 1976
+    """More specific Redmine client for VEuPathDB project"""
+    veupath_redmine_url = 'https://redmine.apidb.org'
+    veupath_project_id = 1976
 
     def __init__(self, key: str) -> None:
-        url = self.url
-        super().__init__(url, key)
-        self.project_id = self.veupathdb_id
+        url = self.veupath_redmine_url
+        super().__init__(url, key, self.veupath_project_id)
+        self.filter = VeupathRedmineFilter()
+
+    def set_build(self, build: int) -> None:
+        redmine = self.redmine
+        versions = redmine.version.filter(project_id=self.project_id)
+        version_name = "Build " + str(build)
+        version_id = [version.id for version in versions if version.name == version_name]
+        self.add_filter("build", version_id)
 
     def get_all_genomes(self):
         """
@@ -197,10 +210,6 @@ def main():
                         choices=[
                             'genomes',
                             'rnaseq',
-                            'missed_datasets',
-                            'missed_status',
-                            'missed_team',
-                            'missed_assignee'
                         ],
                         required=True,
                         help='Get genomes datasets, rnaseq datasets, or other missed datasets)')
@@ -235,52 +244,6 @@ def main():
         redmine.add_filter("datatype", "RNA-seq")
         rnaseqs = redmine.get_issues()
         print(f"{len(rnaseqs)} RNA-Seq datasets issues found")
-
-    if args.get == 'missed_datasets':
-        exclude_datasets = (
-            "Genome sequence and Annotation",
-            "Assembled genome sequence without annotation",
-            "RNA-seq"
-        )
-
-        redmine.add_filter("team", "Data Processing (EBI)")
-        all_issues = redmine.get_issues()
-
-        for issue in all_issues:
-            cfs = IssueUtils.get_custom_fields(issue)
-            if "DataType" in cfs:
-                datatype = cfs["DataType"]
-                if datatype not in exclude_datasets:
-                    print(f"No {datatype}? in {IssueUtils.tostr_full(issue)}")
-
-    if args.get == 'missed_status':
-        """Status is set to EBI, but not the team"""
-        redmine.add_filter("status_id", 20)
-        all_issues = redmine.get_issues()
-
-        for issue in all_issues:
-            cfs = IssueUtils.get_custom_fields(issue)
-            if "VEuPathDB Team" in cfs:
-                team = cfs["VEuPathDB Team"]
-                if team != "Data Processing (EBI)":
-                    print(f"For EBI team? {IssueUtils.tostr_full(issue)}")
-
-    if args.get == 'missed_assignee':
-        """Status is set to a given assignee, but not the team"""
-        if not args.user_id:
-            print("User id required")
-            return
-        redmine.add_filter("assigned_to_id", args.user_id)
-        all_issues = redmine.get_issues()
-
-        for issue in all_issues:
-            cfs = IssueUtils.get_custom_fields(issue)
-            if not cfs:
-                print(f"Non standard? " + IssueUtils.tostr_full(issue))
-            if "VEuPathDB Team" in cfs:
-                team = cfs["VEuPathDB Team"]
-                if team != "Data Processing (EBI)":
-                    print(f"For EBI team? " + IssueUtils.tostr_full(issue))
 
 
 if __name__ == "__main__":
