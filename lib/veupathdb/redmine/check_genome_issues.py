@@ -18,11 +18,8 @@
 import argparse
 from .client import VeupathRedmineClient
 from .issue_utils import IssueUtils
+from .genome import Genome
 
-supported_datatypes = (
-    "Genome sequence and Annotation",
-    "Assembled genome sequence without annotation",
-)
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
 
@@ -33,7 +30,7 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     redmine.add_filter("team", supported_team)
 
     genomes = []
-    for datatype in supported_datatypes:
+    for datatype in Genome.supported_datatypes:
         redmine.add_filter("datatype", datatype)
         issues = redmine.get_issues()
         print(f"{len(issues)} issues for datatype '{datatype}'")
@@ -42,6 +39,13 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     print(f"{len(genomes)} issues for genomes")
     
     return genomes
+
+
+def check_genome_issues(issues) -> None:
+    for issue in issues:
+        genome = Genome(issue)
+        genome.parse()
+        print(f"{genome}")
 
 
 def main():
@@ -76,7 +80,7 @@ def main():
     if args.action == "list":
         IssueUtils.print_issues(issues, "genomes datasets")
     elif args.action == "check":
-        # TODO
+        check_genome_issues(issues)
         pass
 
 
