@@ -102,6 +102,7 @@ def report_genome_issues(issues, report: str) -> None:
             new_genomes.append(issue)
         else:
             others.append(issue)
+            others.sort(key=lambda i: i.organism_abbrev)
     
     components = {}
     for issue in new_genomes:
@@ -111,11 +112,14 @@ def report_genome_issues(issues, report: str) -> None:
             components[comp] = [issue]
         else:
             components[comp].append(issue)
+    comp_order = list(components.keys())
+    comp_order.sort()
 
     lines = []
     lines.append(f"{len(all_issues)} genomes handed over:")
     lines.append(f"- {len(new_genomes)} new genomes:")
-    for comp, issues in components.items():
+    for comp in comp_order:
+        issues = components[comp]
         lines.append(f"\t- {len(issues)} {comp}")
 
     lines.append(f"- {len(others)} other operations:")
@@ -123,12 +127,13 @@ def report_genome_issues(issues, report: str) -> None:
         lines.append(f"\t- {issue.organism_abbrev}: {', '.join(issue.operations)}")
     lines.append("")
 
-    for comp, issues in components.items():
+    for comp in comp_order:
+        issues = components[comp]
+        issues.sort(key=lambda i: i.organism_abbrev)
         lines.append(f"{comp}")
         lines.append(f"{len(issues)} new genomes:")
         for issue in issues:
             lines.append(f"- {issue.organism_abbrev} ({issue.accession})")
-        lines.append("")
 
     with open(report, "w") as report_fh:
         report_fh.write("\n".join(lines))
