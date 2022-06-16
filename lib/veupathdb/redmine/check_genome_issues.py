@@ -83,6 +83,57 @@ def check_genome_issues(issues) -> None:
             print(genome.short_str())
 
 
+def report_genome_issues(issues, report: str) -> None:
+    categories = categorize_genome_issues(issues)
+    all_issues: List[Genome] = categories['valid']
+
+    new_genomes_operations = ("Load from INSDC", "Load from RefSeq", "Load from EnsEMBL")
+
+    new_genomes: List[Genome] = []
+    others: List[Genome] = []
+
+    for issue in all_issues:
+        is_new_genome = False
+        for op in issue.operations:
+            if op in new_genomes_operations:
+                is_new_genome = True
+        
+        if is_new_genome:
+            new_genomes.append(issue)
+        else:
+            others.append(issue)
+    
+    components = {}
+    for issue in new_genomes:
+        comp = issue.component
+        
+        if comp not in components:
+            components[comp] = [issue]
+        else:
+            components[comp].append(issue)
+
+    lines = []
+    lines.append(f"{len(all_issues)} genomes handed over:")
+    lines.append(f"- {len(new_genomes)} new genomes:")
+    for comp, issues in components.items():
+        lines.append(f"\t- {len(issues)} {comp}")
+
+    lines.append(f"- {len(others)} other operations:")
+    for issue in others:
+        lines.append(f"\t- {issue.organism_abbrev}: {', '.join(issue.operations)}")
+    lines.append("")
+
+    for comp, issues in components.items():
+        lines.append(f"{comp}")
+        lines.append(f"{len(issues)} new genomes:")
+        for issue in issues:
+            lines.append(f"- {issue.organism_abbrev} ({issue.accession})")
+        lines.append("")
+
+    with open(report, "w") as report_fh:
+        report_fh.write("\n".join(lines))
+
+
 def extract_genome_issues(issues, output_dir) -> None:
 
     group_names = {
@@ -128,20 +179,19 @@ def main():
     
     parser.add_argument('--key', type=str, required=True,
                         help='Redmine authentification key')
-    # Choice
-    parser.add_argument('--action',
-                        choices=[
-                            'check',
-                            'summary',
-                        ],
-                        required=True,
-                        help='What to do with the list of genome issues')
+
+    parser.add_argument('--check', action='store_true', dest='check',
+                        help='Parse issues and report errors')
+    parser.add_argument('--summary', action='store_true', dest='summary',
+                        help='Short count of all categories')
+    parser.add_argument('--report', type=str,
+                        help='Write a report to a file')
+    parser.add_argument('--store', type=str,
+                        help='Write json files for each Redmine issue')
+
     # Optional
     parser.add_argument('--build', type=int,
                         help='Restrict to a given build')
-    
-    parser.add_argument('--output_dir', type=str,
-                        help='Output_dir')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -151,13 +201,14 @@ def main():
 
     issues = get_genome_issues(redmine)
 
-    if args.action == "summary":
+    if args.summary:
         summarize_genome_issues(issues)
-    elif args.action == "check":
+    elif args.check:
         check_genome_issues(issues)
-    
-    if args.output_dir:
-        extract_genome_issues(issues, args.output_dir)
+    elif args.report:
+        report_genome_issues(issues, args.report)
+    elif args.store:
+        extract_genome_issues(issues, args.store)
 
 
 if __name__ == "__main__":
