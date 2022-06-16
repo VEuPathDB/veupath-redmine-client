@@ -17,18 +17,11 @@
 import re
 from typing import Any, Dict
 from .issue_utils import IssueUtils
+from .redmine_issue import RedmineIssue, DatatypeException
 
 
-class DatatypeException(Exception):
-    pass
-
-
-class MissingDataException(Exception):
-    pass
-
-
-class Genome:
-    """Genome metadata representing to a Redmine issue."""
+class Genome(RedmineIssue):
+    """Genome metadata representing a Redmine issue."""
 
     supported_datatypes = (
         "Genome sequence and Annotation",
@@ -37,15 +30,11 @@ class Genome:
     insdc_pattern = r'^GC[AF]_\d{9}(\.\d+)?$'
 
     def __init__(self, issue):
-        self.issue = issue
-        self.custom = IssueUtils.get_custom_fields(self.issue)
+        super().__init__(issue)
         self.gff = ""
         self.is_replacement = False
         self.operations = []
-        self.component = ""
-        self.organism_abbrev = ""
         self.accession = ""
-        self.errors = []
     
     def to_json_struct(self) -> Dict[str, Any]:
         data = {
@@ -81,9 +70,6 @@ class Genome:
         desc = f"{desc} ({ops}{gff}{stable_ids}{replace})"
         return f"  {desc:64}\t{issue.id:8}  {issue.subject}"
     
-    def _add_error(self, msg: str) -> None:
-        self.errors.append(msg)
-
     def parse(self) -> None:
         """
         Given a Veupath Redmine genome issue, extracts relevant data
@@ -141,34 +127,6 @@ class Genome:
             self._add_error("Wrong INSDC accession format")
         else:
             self.accession = accession
-
-    def _get_component(self) -> None:
-        components = self.custom["Component DB"]
-        if len(components) == 1:
-            self.component = components[0]
-        elif len(components) == 0:
-            self._add_error("No component")
-        elif len(components) > 1:
-            self._add_error("Several components")
-    
-    def _get_organism_abbrev(self) -> None:
-        abbrev = self.custom["Organism Abbreviation"]
-        if abbrev:
-            # Check before loading
-            abbrev = abbrev.strip()
-            if not self._check_organism_abbrev(abbrev):
-                self._add_error(f"Invalid organism_abbrev: {abbrev}")
-            else:
-                self.organism_abbrev = abbrev
-        else:
-            # Also check if it can be generated from the field 'Experimental Organisms'
-            if self._get_experimental_organism():
-                self._add_error("Missing organism_abbrev, auto ok")
-            else:
-                self._add_error("Missing organism_abbrev, no auto")
-
-    def _get_experimental_organism(self) -> str:
-        return self.custom["Experimental Organisms"]
 
     def _get_operations(self) -> None:
         operations = self.custom["EBI operations"]
