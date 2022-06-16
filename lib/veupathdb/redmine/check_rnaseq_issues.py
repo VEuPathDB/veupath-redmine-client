@@ -16,12 +16,11 @@
 
 
 import argparse
+from typing import Dict, List
 from .client import VeupathRedmineClient
 from .issue_utils import IssueUtils
+from .rnaseq import RNAseq
 
-supported_datatypes = (
-    "RNA-seq",
-)
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
 
@@ -32,7 +31,7 @@ def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
     redmine.add_filter("team", supported_team)
 
     datasets = []
-    for datatype in supported_datatypes:
+    for datatype in RNAseq.supported_datatypes:
         redmine.add_filter("datatype", datatype)
         issues = redmine.get_issues()
         print(f"{len(issues)} issues for datatype '{datatype}'")
@@ -43,21 +42,80 @@ def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
     return datasets
 
 
+def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
+    validity: Dict[str, List[RNAseq]] = {
+        'valid': [],
+        'invalid': [],
+    }
+    for issue in issues:
+        dataset = RNAseq(issue)
+        dataset.parse()
+
+        if dataset.errors:
+            validity['invalid'].append(dataset)
+        else:
+            validity['valid'].append(dataset)
+    
+    categories = validity
+    return categories
+
+
+def check_issues(issues) -> None:
+    categories = categorize_issues(issues)
+    for key in categories:
+        print(f"{len(categories[key])} {key}:")
+        genomes = categories[key]
+        for genome in genomes:
+            print(genome.short_str())
+
+
+def report_issues(issues, report: str) -> None:
+    categories = categorize_issues(issues)
+    all_issues: List[RNAseq] = categories['valid']
+    if not all_issues:
+        print("No valid issue to report")
+        return
+
+    components = {}
+    for issue in all_issues:
+        comp = issue.component
+        
+        if comp not in components:
+            components[comp] = [issue]
+        else:
+            components[comp].append(issue)
+    comp_order = list(components.keys())
+    comp_order.sort()
+
+    lines = []
+    lines.append(f"{len(all_issues)} datasets handed over:")
+    for comp in comp_order:
+        issues = components[comp]
+        lines.append(f"\t- {len(issues)} {comp}")
+
+    lines.append("New datasets")
+    all_issues.sort(key=lambda i: (i.component, i.organism_abbrev, i.dataset_name))
+    lines.append("Component\tSpecies\tDataset\tSamples")
+    for issue in all_issues:
+        lines.append(f"{issue.component}\t{issue.organism_abbrev}\t{issue.dataset_name}\t{len(issue.samples)}")
+
+    with open(report, "w") as report_fh:
+        report_fh.write("\n".join(lines))
+
+
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='List RNA-Seq issues from Redmine')
     
     parser.add_argument('--key', type=str, required=True,
                         help='Redmine authentification key')
-    # Choice
-    parser.add_argument('--action',
-                        choices=[
-                            'list',
-                            'check',
-                            'count',
-                        ],
-                        required=True,
-                        help='What to do with the list of RNA-Seq issues')
+    
+    parser.add_argument('--list', action='store_true', dest='list',
+                        help='Just list all issues')
+    parser.add_argument('--check', action='store_true', dest='check',
+                        help='Parse issues and report errors')
+    parser.add_argument('--report', type=str,
+                        help='Write a report to a file')
     # Optional
     parser.add_argument('--build', type=int,
                         help='Restrict to a given build')
@@ -70,13 +128,12 @@ def main():
 
     issues = get_rnaseq_issues(redmine)
 
-    if args.action == "count":
-        pass
-    if args.action == "list":
+    if args.list:
         IssueUtils.print_issues(issues, "RNA-Seq datasets")
-    elif args.action == "check":
-        # TODO
-        pass
+    elif args.check:
+        check_issues(issues)
+    elif args.report:
+        report_issues(issues, args.report)
 
 
 if __name__ == "__main__":
