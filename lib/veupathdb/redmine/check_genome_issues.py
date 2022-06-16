@@ -15,6 +15,8 @@
 # limitations under the License.
 
 
+import os
+import json
 import argparse
 from typing import Dict, List
 from .client import VeupathRedmineClient
@@ -81,6 +83,45 @@ def check_genome_issues(issues) -> None:
             print(genome.short_str())
 
 
+def extract_genome_issues(issues, output_dir) -> None:
+
+    group_names = {
+        'Reference change': 'reference_change',
+        'Load from RefSeq': 'new_genomes',
+        'Load from INSDC': 'new_genomes',
+        'Allocate stable ids': 'stable_ids',
+        'Load from EnSEMBL': 'copy_ensembl',
+        'Patch build': 'patch_build',
+        'Other': 'other',
+    }
+    no_extraction = (
+        'valid',
+        'invalid',
+    )
+
+    categories = categorize_genome_issues(issues)
+    for group, genomes in categories.items():
+        if group in no_extraction:
+            continue
+
+        if genomes:
+            if group in group_names:
+                group_name = group_names[group]
+            else:
+                group_name = 'other'
+            group_dir = os.path.join(output_dir, group_name)
+            try:
+                os.makedirs(group_dir)
+            except FileExistsError:
+                pass
+            
+            for genome in genomes:
+                organism = genome.organism_abbrev
+                organism_file = os.path.join(group_dir, organism + ".json")
+                with open(organism_file, "w") as f:
+                    json.dump(genome.to_json_struct(), f, indent=True)
+
+
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='List genome issues from Redmine')
@@ -98,6 +139,9 @@ def main():
     # Optional
     parser.add_argument('--build', type=int,
                         help='Restrict to a given build')
+    
+    parser.add_argument('--output_dir', type=str,
+                        help='Output_dir')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -111,6 +155,9 @@ def main():
         summarize_genome_issues(issues)
     elif args.action == "check":
         check_genome_issues(issues)
+    
+    if args.output_dir:
+        extract_genome_issues(issues, args.output_dir)
 
 
 if __name__ == "__main__":
