@@ -15,7 +15,7 @@
 # limitations under the License.
 
 import re
-import json
+from typing import Any, Dict
 from .issue_utils import IssueUtils
 
 
@@ -47,7 +47,7 @@ class Genome:
         self.accession = ""
         self.errors = []
     
-    def to_json(self) -> str:
+    def to_json_struct(self) -> Dict[str, Any]:
         data = {
             "BRC4": {
                 "component": self.component,
@@ -59,7 +59,7 @@ class Genome:
             },
             "genebuild": {},
         }
-        return json.dumps(data)
+        return data
     
     def __str__(self) -> str:
         line = f"{IssueUtils.tostr(self.issue)} = {self.component}: {self.organism_abbrev}"
