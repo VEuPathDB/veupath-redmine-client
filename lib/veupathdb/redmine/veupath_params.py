@@ -25,4 +25,5 @@ class VeupathParams:
         # Custom fields
         "team": "cf_17",
         "datatype": "cf_94",
+        "organism_abbrev": "cf_110",
     }

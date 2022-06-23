@@ -106,7 +106,10 @@ class VeupathRedmineClient(RedmineClient):
         version_id = [version.id for version in versions if version.name == version_name]
         self.add_filter("build", version_id)
 
+    def set_organism(self, organism: int) -> None:
+        self.add_filter("organism_abbrev", organism)
     
+
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Retrieve metadata from Redmine')
