@@ -28,8 +28,6 @@ supported_status_id = 20
 def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
     """Get issues for all RNA-Seq datasets"""
 
-    redmine.add_filter("team", supported_team)
-
     datasets = []
     for datatype in RNAseq.supported_datatypes:
         redmine.add_filter("datatype", datatype)
@@ -116,16 +114,25 @@ def main():
                         help='Parse issues and report errors')
     parser.add_argument('--report', type=str,
                         help='Write a report to a file')
+    parser.add_argument('--species', type=str,
+                        help='Get all RNA-Seq data for a given species (organism_abbrev)')
     # Optional
     parser.add_argument('--build', type=int,
                         help='Restrict to a given build')
+    parser.add_argument('--any_team', action='store_true', dest='any_team',
+                        help='Do not filter by the processing team')
     args = parser.parse_args()
     
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
+
+    if not args.any_team:
+        redmine.add_filter("team", supported_team)
     if args.build:
         redmine.set_build(args.build)
 
+    if args.species:
+        redmine.set_organism(args.species)
     issues = get_rnaseq_issues(redmine)
 
     if args.list:
