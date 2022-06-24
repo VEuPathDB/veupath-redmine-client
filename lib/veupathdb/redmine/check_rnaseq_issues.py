@@ -15,6 +15,8 @@
 # limitations under the License.
 
 
+import os
+import json
 import argparse
 from typing import Dict, List
 from .client import VeupathRedmineClient
@@ -101,6 +103,28 @@ def report_issues(issues, report: str) -> None:
         report_fh.write("\n".join(lines))
 
 
+def extract_issues(issues, output_dir) -> None:
+
+    categories = categorize_issues(issues)
+    all_issues: List[RNAseq] = categories['valid']
+    if not all_issues:
+        print("No valid issue to report")
+        return
+    else:
+        for dataset in all_issues:
+            component = dataset.component
+            comp_dir = os.path.join(output_dir, component)
+            try:
+                os.makedirs(comp_dir)
+            except FileExistsError:
+                pass
+        
+            dataset_name = dataset.dataset_name
+            organism_file = os.path.join(comp_dir, dataset_name + ".json")
+            with open(organism_file, "w") as f:
+                json.dump(dataset.to_json_struct(), f, indent=True)
+
+
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='List RNA-Seq issues from Redmine')
@@ -121,6 +145,8 @@ def main():
                         help='Restrict to a given build')
     parser.add_argument('--any_team', action='store_true', dest='any_team',
                         help='Do not filter by the processing team')
+    parser.add_argument('--store', type=str,
+                        help='Write json files for each Redmine issue')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -141,6 +167,8 @@ def main():
         check_issues(issues)
     elif args.report:
         report_issues(issues, args.report)
+    elif args.store:
+        extract_issues(issues, args.store)
 
 
 if __name__ == "__main__":

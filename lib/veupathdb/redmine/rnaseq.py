@@ -38,7 +38,21 @@ class RNAseq(RedmineIssue):
         self.samples = []
     
     def to_json_struct(self) -> Dict[str, Any]:
-        data: Dict[str, Any] = {}
+        data: Dict[str, Any] = {
+        "component": "",
+        "species": "",
+        "name": "",
+        "runs": [],
+        }
+        if self.component:
+            data["component"] = self.component
+        if self.organism_abbrev:
+            data["species"] = self.organism_abbrev
+        if self.dataset_name:
+            data["name"] = self.dataset_name
+        if self.samples:
+            data["runs"] = self.samples
+
         return data
     
     def __str__(self) -> str:
