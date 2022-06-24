@@ -111,6 +111,7 @@ def extract_issues(issues, output_dir) -> None:
         print("No valid issue to report")
         return
     else:
+        all_datasets_structs = []
         for dataset in all_issues:
             component = dataset.component
             comp_dir = os.path.join(output_dir, component)
@@ -122,7 +123,13 @@ def extract_issues(issues, output_dir) -> None:
             dataset_name = dataset.dataset_name
             organism_file = os.path.join(comp_dir, dataset_name + ".json")
             with open(organism_file, "w") as f:
-                json.dump(dataset.to_json_struct(), f, indent=True)
+                dataset_struct = dataset.to_json_struct()
+                all_datasets_structs.append(dataset_struct)
+                json.dump([dataset_struct], f, indent=True)
+
+        all_structs_file = os.path.join(output_dir, 'all.json')
+        with open(all_structs_file, "w") as f:
+            json.dump(all_datasets_structs, f, indent=True)
 
 
 def main():
