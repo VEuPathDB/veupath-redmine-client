@@ -21,6 +21,10 @@ from .issue_utils import IssueUtils
 from .redmine_issue import RedmineIssue, DatatypeException
 
 
+class SamplesParsingException(Exception):
+    pass
+
+
 class RNAseq(RedmineIssue):
     """RNA-Seq metadata representing a Redmine issue."""
 
@@ -105,43 +109,46 @@ class RNAseq(RedmineIssue):
         # Parse each line
         lines = sample_str.split("\n")
 
-        sample_names = dict()
-        for line in lines:
-            line = line.strip()
-            if line == "":
-                continue
+        try:
+            sample_names = dict()
+            for line in lines:
+                line = line.strip()
+                if line == "":
+                    continue
 
-            # Get sample_name -> accessions
-            parts = line.split(":")
-            if len(parts) > 2:
-                end = parts[-1]
-                start = ":".join(parts[:-1])
-                parts = [start, end]
-            
-            if len(parts) == 2:
-                sample_name = parts[0].strip()
+                # Get sample_name -> accessions
+                parts = line.split(":")
+                if len(parts) > 2:
+                    end = parts[-1]
+                    start = ":".join(parts[:-1])
+                    parts = [start, end]
                 
-                if sample_name in sample_names:
-                    raise Exception("Several samples have the same name '%s'" % sample_name)
-                else:
-                    sample_names[sample_name] = True
-                
-                accessions_str = parts[1].strip()
-                accessions = [x.strip() for x in accessions_str.split(",")]
-                
-                if not self._validate_accessions(accessions):
-                    if self._validate_accessions(sample_name.split(",")):
-                        raise Exception("Sample name and accessions are switched?")
+                if len(parts) == 2:
+                    sample_name = parts[0].strip()
+                    
+                    if sample_name in sample_names:
+                        raise SamplesParsingException("Several samples have the same name '%s'" % sample_name)
                     else:
-                        raise Exception(f"Invalid accession among '{accessions}'")
-                
-                sample = {
-                    "name": self._normalize_name(sample_name),
-                    "accessions": accessions
-                }
-                samples.append(sample)
-            else:
-                raise Exception("Sample line doesn't have 2 parts: '%s'" % line)
+                        sample_names[sample_name] = True
+                    
+                    accessions_str = parts[1].strip()
+                    accessions = [x.strip() for x in accessions_str.split(",")]
+                    
+                    if not self._validate_accessions(accessions):
+                        if self._validate_accessions(sample_name.split(",")):
+                            raise SamplesParsingException(f"Sample name and accessions are switched? ({line})")
+                        else:
+                            raise SamplesParsingException(f"Invalid accession among '{accessions}' ({line})")
+                    
+                    sample = {
+                        "name": self._normalize_name(sample_name),
+                        "accessions": accessions
+                    }
+                    samples.append(sample)
+                else:
+                    raise SamplesParsingException(f"Sample line doesn't have 2 parts ({line})")
+        except SamplesParsingException as e:
+            self._add_error(str(e))
         
         return samples
 
