@@ -97,7 +97,10 @@ def report_issues(issues, report: str) -> None:
     all_issues.sort(key=lambda i: (i.component, i.organism_abbrev, i.dataset_name))
     lines.append("Component\tSpecies\tDataset\tSamples")
     for issue in all_issues:
-        lines.append(f"{issue.component}\t{issue.organism_abbrev}\t{issue.dataset_name}\t{len(issue.samples)}")
+        content = (
+            issue.component, issue.organism_abbrev, issue.dataset_name, str(len(issue.samples))
+        )
+        lines.append("\t".join(content))
 
     with open(report, "w") as report_fh:
         report_fh.write("\n".join(lines))
