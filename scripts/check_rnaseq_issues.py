@@ -19,9 +19,9 @@ import os
 import json
 import argparse
 from typing import Dict, List
-from .client import VeupathRedmineClient
-from .issue_utils import IssueUtils
-from .rnaseq import RNAseq
+from veupath.redmine.client import VeupathRedmineClient
+from veupath.redmine.client.issue_utils import IssueUtils
+from veupath.redmine.client.rnaseq import RNAseq
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20

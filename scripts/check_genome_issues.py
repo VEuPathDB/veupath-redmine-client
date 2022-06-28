@@ -19,8 +19,8 @@ import os
 import json
 import argparse
 from typing import Dict, List
-from .client import VeupathRedmineClient
-from .genome import Genome
+from veupath.redmine.client import VeupathRedmineClient
+from veupath.redmine.client.genome import Genome
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20

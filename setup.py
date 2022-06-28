@@ -1,15 +1,20 @@
 from setuptools import setup
 
 setup(
-    name='Veupath-Redmine-Client',
+    name='veupath-redmine-client',
     version='0.1.0',
     description='A VeupathDB specific Redmine client',
-    url='https://github.com/VEuPathDBveupath-redmine-client',
+    url='https://github.com/VEuPathDB/veupath-redmine-client',
     author='Matthieu Barba',
     author_email='mbarba@ebi.ac.uk',
     license='Apache Software License',
-    packages=['lib/veupathdb'],
-    install_requires=['python-redmine'],
+    packages=['veupath/redmine/client'],
+    install_requires=['python-redmine', 'wheel'],
+
+    scripts=['scripts/check_genome_issues.py',
+             'scripts/check_rnaseq_issues.py',
+             'scripts/check_missed_issues.py'
+             ],
 
     classifiers=[
         'Development Status :: 1 - Planning',
