@@ -16,6 +16,8 @@
 
 
 from redminelib import Redmine
+
+from veupath.redmine.client.redmine_issue import RedmineIssue
 from .veupath_params import VeupathParams
 from .issue_utils import IssueUtils
 import argparse
@@ -88,6 +90,24 @@ class RedmineClient:
 
         search_fields = self.filter.fields
         return list(self.redmine.issue.filter(**search_fields))
+
+    def update_custom_value(self, issue: RedmineIssue, field_name: str, field_value: str) -> bool:
+        custom = IssueUtils.get_custom_ids(issue.issue)
+        
+        if field_name in custom:
+            field_id = custom[field_name]
+            feedback = self.redmine.issue.update(
+                issue.issue.id,
+                custom_fields=[{'id': field_id, 'value': field_value}]
+            )
+            if not feedback:
+                print(f"Failed to update {field_name} with value {field_value} in {issue.id}")
+                return False
+            else:
+                return True
+        else:
+            raise Exception(f"Can't find custom field named {field_name}")
+        return False
     
 
 class VeupathRedmineClient(RedmineClient):

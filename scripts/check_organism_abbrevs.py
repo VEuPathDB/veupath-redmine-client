@@ -43,19 +43,6 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     return genomes
 
 
-def check_abbrevs(issues: List[RedmineIssue]) -> None:
-    categories = categorize_abbrevs(issues)
-
-    for cat in ('invalid', 'new', 'valid'):
-        cat_genomes = categories[cat]
-        print(f"\n{len(cat_genomes)} {cat.upper()} organism abbrevs:")
-        for genome in cat_genomes:
-            new_org = genome.organism_abbrev
-            line = [f"{new_org:20}", str(genome.issue.id)]
-            line.append(f"From {genome.experimental_organism}")
-            print("\t".join(line))
-
-
 def categorize_abbrevs(issues: List[RedmineIssue]) -> Dict[str, List[Genome]]:
 
     category: Dict[str, List[Genome]] = {
@@ -80,8 +67,36 @@ def categorize_abbrevs(issues: List[RedmineIssue]) -> Dict[str, List[Genome]]:
     return category
 
 
+def check_abbrevs(issues: List[RedmineIssue]) -> None:
+    categories = categorize_abbrevs(issues)
+
+    for cat in ('invalid', 'new', 'valid'):
+        cat_genomes = categories[cat]
+        print(f"\n{len(cat_genomes)} {cat.upper()} organism abbrevs:")
+        for genome in cat_genomes:
+            new_org = genome.organism_abbrev
+            line = [f"{new_org:20}", str(genome.issue.id)]
+            line.append(f"From {genome.experimental_organism}")
+            print("\t".join(line))
+
+
+def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue]) -> None:
+    categories = categorize_abbrevs(issues)
+    to_name = categories['new']
+    print(f"\n{len(to_name)} new organism abbrevs to update:")
+    for genome in to_name:
+        new_org = genome.organism_abbrev
+        line = [f"{new_org:20}", str(genome.issue.id)]
+        status = redmine.update_custom_value(genome, 'Organism Abbreviation', new_org)
+        if status:
+            line.append("UPDATED")
+        else:
+            line.append("UPDATE FAILED")
+        print("\t".join(line))
+
+
 def _validate_abbrev(abbrev: str) -> bool:
-    abbrev_format = r'^([a-z]{4}|[a-z]sp)[A-z0-9-]+$'
+    abbrev_format = r'^([a-z]{4}|[a-z]sp)[A-z0-9_.-]+$'
     if re.match(abbrev_format, abbrev):
         return True
     else:
@@ -111,10 +126,6 @@ def _generate_abbrev(genome) -> str:
     return organism_abbrev
 
 
-def update_abbrevs(issues: List[RedmineIssue]) -> None:
-    pass
-
-
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='List and generate organism_abbrevs from Redmine')
@@ -124,7 +135,7 @@ def main():
 
     parser.add_argument('--check', action='store_true', dest='check',
                         help='Show the organism_abbrev status for the selected issues')
-    parser.add_argument('--update', type=str,
+    parser.add_argument('--update', action='store_true', dest='update',
                         help='Actually update the organism_abbrevs for the selected issues')
 
     # Optional
@@ -142,7 +153,7 @@ def main():
     if args.check:
         check_abbrevs(issues)
     elif args.update:
-        update_abbrevs(issues)
+        update_abbrevs(redmine, issues)
 
 
 if __name__ == "__main__":

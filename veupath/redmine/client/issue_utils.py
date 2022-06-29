@@ -26,13 +26,28 @@ class IssueUtils:
     def get_custom_fields(issue) -> dict:
         """
         Put all Redmine custom fields in a dict instead of an array
-        Return a dict
+        Return a dict where the value is the value of the field
         """
         
         cfs = {}
         try:
             for c in issue.custom_fields:
                 cfs[c["name"]] = c["value"]
+        except exceptions.ResourceAttrError:
+            pass
+        return cfs
+
+    @staticmethod
+    def get_custom_ids(issue) -> dict:
+        """
+        Put all Redmine custom fields in a dict instead of an array
+        Return a dict where the value is the id of the field
+        """
+        
+        cfs = {}
+        try:
+            for c in issue.custom_fields:
+                cfs[c["name"]] = c["id"]
         except exceptions.ResourceAttrError:
             pass
         return cfs
