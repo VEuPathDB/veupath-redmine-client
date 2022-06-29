@@ -90,6 +90,7 @@ class Genome(RedmineIssue):
         """
         self._get_component()
         self._get_organism_abbrev()
+        self._get_experimental_organism()
         self._get_insdc_accession()
         self._get_operations()
         self._get_gff()

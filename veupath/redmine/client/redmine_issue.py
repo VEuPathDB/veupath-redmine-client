@@ -34,6 +34,7 @@ class RedmineIssue:
         self.custom = IssueUtils.get_custom_fields(self.issue)
         self.component = ""
         self.organism_abbrev = ""
+        self.experimental_organism = ""
         self.errors = []
     
     def _add_error(self, msg: str) -> None:
@@ -58,14 +59,15 @@ class RedmineIssue:
             else:
                 self.organism_abbrev = abbrev
         else:
+            self._get_experimental_organism()
             # Also check if it can be generated from the field 'Experimental Organisms'
-            if self._get_experimental_organism():
+            if self.experimental_organism:
                 self._add_error("Missing organism_abbrev, auto ok")
             else:
                 self._add_error("Missing organism_abbrev, no auto")
 
-    def _get_experimental_organism(self) -> str:
-        return self.custom["Experimental Organisms"]
+    def _get_experimental_organism(self) -> None:
+        self.experimental_organism = self.custom["Experimental Organisms"]
     
     @staticmethod
     def _check_organism_abbrev(name) -> bool:
