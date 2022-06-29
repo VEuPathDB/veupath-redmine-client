@@ -16,6 +16,7 @@
 
 import re
 from .issue_utils import IssueUtils
+from .orgs_utils import OrgsUtils
 
 
 class DatatypeException(Exception):
@@ -54,7 +55,7 @@ class RedmineIssue:
         if abbrev:
             # Check before loading
             abbrev = abbrev.strip()
-            if not self._check_organism_abbrev(abbrev):
+            if not OrgsUtils.validate_abbrev(abbrev):
                 self._add_error(f"Invalid organism_abbrev: {abbrev}")
             else:
                 self.organism_abbrev = abbrev

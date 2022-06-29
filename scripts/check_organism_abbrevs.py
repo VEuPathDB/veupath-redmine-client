@@ -15,12 +15,13 @@
 # limitations under the License.
 
 
-import re
 import argparse
+from ast import Expression
 from typing import Dict, List
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
 from veupath.redmine.client.redmine_issue import RedmineIssue
+from veupath.redmine.client.orgs_utils import OrgsUtils
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
@@ -54,11 +55,12 @@ def categorize_abbrevs(issues: List[RedmineIssue]) -> Dict[str, List[Genome]]:
         genome = Genome(issue)
         genome.parse()
         if genome.errors and not genome.organism_abbrev:
-            new_org = _generate_abbrev(genome)
+            exp_organism = genome.experimental_organism
+            new_org = OrgsUtils.generate_abbrev(exp_organism)
             genome.organism_abbrev = new_org
             category["new"].append(genome)
         else:
-            valid = _validate_abbrev(genome.organism_abbrev)
+            valid = OrgsUtils.validate_abbrev(genome.organism_abbrev)
             if valid:
                 category["valid"].append(genome)
             else:
@@ -93,37 +95,6 @@ def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue]) ->
         else:
             line.append("UPDATE FAILED")
         print("\t".join(line))
-
-
-def _validate_abbrev(abbrev: str) -> bool:
-    abbrev_format = r'^([a-z]{4}|[a-z]sp)[A-z0-9_.-]+$'
-    if re.match(abbrev_format, abbrev):
-        return True
-    else:
-        return False
-
-
-def _generate_abbrev(genome) -> str:
-    name = genome.experimental_organism
-    
-    name = name.strip()
-    if name == "":
-        raise Exception("field 'Experimental Organisms' needed")
-    items = name.split(" ")
-    if len(items) < 3:
-        raise Exception(f"name is too short ({name})")
-
-    genus = items[0]
-    species = items[1]
-    strain_abbrev = "".join(items[2:])
-    
-    genus = re.sub(r"[\[\]]", "", genus)
-    strains_pattern = r"(isolate|strain|breed|str\.|subspecies|sp\.)"
-    strain_abbrev = re.sub(strains_pattern, "", strain_abbrev, flags=re.IGNORECASE)
-    strain_abbrev = re.sub(r"[\/\(\)#:-]", "", strain_abbrev)
-    
-    organism_abbrev = genus[0].lower() + species[0:3] + strain_abbrev
-    return organism_abbrev
 
 
 def main():
