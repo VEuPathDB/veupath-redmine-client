@@ -50,7 +50,10 @@ def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -
         "new": [],
         "valid": [],
         "invalid": [],
-        "exists": []
+        "exists_replace": [],
+        "exists_noreplace": [],
+        "new_exists_replace": [],
+        "new_exists_noreplace": [],
     }
 
     for issue in issues:
@@ -59,16 +62,23 @@ def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -
         if not genome.organism_abbrev:
             exp_organism = genome.experimental_organism
             new_org = OrgsUtils.generate_abbrev(exp_organism)
-            print(f"In {issue.id} = {new_org} ({genome.organism_abbrev})")
             genome.organism_abbrev = new_org
             if new_org.lower() in cur_abbrevs:
-                category["new_exists"].append(genome)
+                if genome.is_replacement:
+                    category["new_exists_replace"].append(genome)
+                else:
+                    category["new_exists_noreplace"].append(genome)
             else:
                 category["new"].append(genome)
+                cur_abbrevs.update([new_org])
         else:
             if genome.organism_abbrev.lower() in cur_abbrevs:
-                category["exists"].append(genome)
+                if genome.is_replacement:
+                    category["exists_replace"].append(genome)
+                else:
+                    category["exists_noreplace"].append(genome)
             else:
+                cur_abbrevs.update([genome.organism_abbrev])
                 valid = OrgsUtils.validate_abbrev(genome.organism_abbrev)
                 if valid:
                     category["valid"].append(genome)
@@ -81,8 +91,18 @@ def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -
 def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
 
-    for cat in ('invalid', 'new', 'exists', 'valid'):
+    for cat in (
+        'invalid',
+        'new_exists_replace',
+        'new_exists_noreplace',
+        'exists_noreplace',
+        'new',
+        'exists_replace',
+        'valid',
+    ):
         cat_genomes = categories[cat]
+        if len(cat_genomes) == 0:
+            continue
         print(f"\n{len(cat_genomes)} {cat.upper()} organism abbrevs:")
         for genome in cat_genomes:
             new_org = genome.organism_abbrev
