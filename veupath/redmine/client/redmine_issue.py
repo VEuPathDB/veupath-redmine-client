@@ -42,7 +42,11 @@ class RedmineIssue:
         self.errors.append(msg)
 
     def _get_component(self) -> None:
-        components = self.custom["Component DB"]
+        try:
+            components = self.custom["Component DB"]
+        except KeyError:
+            components = []
+
         if len(components) == 1:
             self.component = components[0]
         elif len(components) == 0:
@@ -51,14 +55,17 @@ class RedmineIssue:
             self._add_error("Several components")
     
     def _get_organism_abbrev(self) -> None:
-        abbrev = self.custom["Organism Abbreviation"]
+        try:
+            abbrev = self.custom["Organism Abbreviation"]
+        except KeyError:
+            abbrev = ""
+
         if abbrev:
             # Check before loading
             abbrev = abbrev.strip()
             if not OrgsUtils.validate_abbrev(abbrev):
                 self._add_error(f"Invalid organism_abbrev: {abbrev}")
-            else:
-                self.organism_abbrev = abbrev
+            self.organism_abbrev = abbrev
         else:
             self._get_experimental_organism()
             # Also check if it can be generated from the field 'Experimental Organisms'

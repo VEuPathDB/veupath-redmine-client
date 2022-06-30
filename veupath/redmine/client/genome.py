@@ -130,7 +130,11 @@ class Genome(RedmineIssue):
             self.accession = accession
 
     def _get_operations(self) -> None:
-        operations = self.custom["EBI operations"]
+        try:
+            operations = self.custom["EBI operations"]
+        except KeyError:
+            operations = []
+
         if operations:
             self.operations = operations
         else:
@@ -145,10 +149,19 @@ class Genome(RedmineIssue):
             return False
 
     def _get_gff(self) -> None:
-        gff_path = self.custom["GFF 2 Load"]
+        try:
+            gff_path = self.custom["GFF 2 Load"]
+        except KeyError:
+            gff_path = ""
+
         if gff_path:
             self.gff = gff_path
 
     def _get_replacement(self) -> None:
-        if self.custom["Replacement genome?"].startswith("Yes"):
+        try:
+            replace = self.custom["Replacement genome?"]
+        except KeyError:
+            replace = ""
+
+        if replace.startswith("Yes"):
             self.is_replacement = True
