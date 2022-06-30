@@ -148,15 +148,17 @@ def main():
                         help='Parse issues and report errors')
     parser.add_argument('--report', type=str,
                         help='Write a report to a file')
-    parser.add_argument('--species', type=str,
-                        help='Get all RNA-Seq data for a given species (organism_abbrev)')
+    parser.add_argument('--store', type=str,
+                        help='Write json files for each Redmine issue')
     # Optional
     parser.add_argument('--build', type=int,
                         help='Restrict to a given build')
+    parser.add_argument('--component', type=str,
+                        help='Restrict to a given component')
+    parser.add_argument('--species', type=str,
+                        help='Get all RNA-Seq data for a given species (organism_abbrev)')
     parser.add_argument('--any_team', action='store_true', dest='any_team',
                         help='Do not filter by the processing team')
-    parser.add_argument('--store', type=str,
-                        help='Write json files for each Redmine issue')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -166,6 +168,8 @@ def main():
         redmine.add_filter("team", supported_team)
     if args.build:
         redmine.set_build(args.build)
+    if args.component:
+        redmine.set_component(args.component)
 
     if args.species:
         redmine.set_organism(args.species)

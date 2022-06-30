@@ -129,6 +129,9 @@ class VeupathRedmineClient(RedmineClient):
     def set_organism(self, organism: int) -> None:
         self.add_filter("organism_abbrev", organism)
     
+    def set_component(self, component: int) -> None:
+        self.add_filter("component", component)
+
 
 def main():
     # Parse command line arguments

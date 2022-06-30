@@ -197,12 +197,18 @@ def main():
     # Optional
     parser.add_argument('--build', type=int,
                         help='Restrict to a given build')
+    parser.add_argument('--component', type=str,
+                        help='Restrict to a given component')
+    parser.add_argument('--any_team', action='store_true', dest='any_team',
+                        help='Do not filter by the processing team')
     args = parser.parse_args()
     
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
     if args.build:
         redmine.set_build(args.build)
+    if args.component:
+        redmine.set_component(args.component)
 
     issues = get_genome_issues(redmine)
 
