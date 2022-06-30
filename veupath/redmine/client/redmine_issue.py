@@ -67,12 +67,7 @@ class RedmineIssue:
                 self._add_error(f"Invalid organism_abbrev: {abbrev}")
             self.organism_abbrev = abbrev
         else:
-            self._get_experimental_organism()
-            # Also check if it can be generated from the field 'Experimental Organisms'
-            if self.experimental_organism:
-                self._add_error("Missing organism_abbrev, auto ok")
-            else:
-                self._add_error("Missing organism_abbrev, no auto")
+            self._add_error("Missing organism_abbrev")
 
     def _get_experimental_organism(self) -> None:
         self.experimental_organism = self.custom["Experimental Organisms"]
