@@ -16,12 +16,16 @@
 
 
 import re
+from typing import Set
+
+
+class InvalidAbbrev(Exception):
+    pass
 
 
 class OrgsUtils:
 
     abbrev_format = r'^([a-z]{4}|[a-z]sp)[A-z0-9_.-]+$'
-
 
     @staticmethod
     def validate_abbrev(abbrev: str) -> bool:
@@ -42,12 +46,41 @@ class OrgsUtils:
 
         genus = items[0]
         species = items[1]
-        strain_abbrev = "".join(items[2:])
+
+        if items[2] in ('var.', 'f.'):
+            var = items[3]
+            strain_abbrev = "".join(items[4:])
+        else:
+            var = ""
+            strain_abbrev = "".join(items[2:])
         
         genus = re.sub(r"[\[\]]", "", genus)
         strains_pattern = r"(isolate|strain|breed|str\.|subspecies|sp\.)"
         strain_abbrev = re.sub(strains_pattern, "", strain_abbrev, flags=re.IGNORECASE)
-        strain_abbrev = re.sub(r"[\/\(\)#:-]", "", strain_abbrev)
+        strain_abbrev = re.sub(r"[\/\(\)#:+-]", "", strain_abbrev)
         
-        organism_abbrev = genus[0].lower() + species[0:3] + strain_abbrev
+        org_list = (genus[0].lower(), species[0:3], var[0:3], strain_abbrev)
+        organism_abbrev = "".join(org_list)
+
+        valid = OrgsUtils.validate_abbrev(organism_abbrev)
+        if not valid:
+            raise InvalidAbbrev(f"Invalid organism abbrev generated: '{organism_abbrev}' from '{name}'")
         return organism_abbrev
+
+    @staticmethod
+    def load_abbrevs(abbrev_path: str) -> Set[str]:
+        if not abbrev_path:
+            return set()
+
+        abbrevs_list = []
+        with open(abbrev_path, "r") as abbrev_file:
+            for line in abbrev_file:
+                if re.match("\t| ", line):
+                    raise Exception("Abbreviation file contains spaces or columns")
+                abbrev = line.strip().lower()
+                abbrevs_list.append(abbrev)
+        abbrevs = set(abbrevs_list)
+
+        print(f"{len(abbrevs)} abbreviations loaded")
+        
+        return abbrevs

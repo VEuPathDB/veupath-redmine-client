@@ -16,7 +16,6 @@
 
 
 import argparse
-from ast import Expression
 from typing import Dict, List
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
@@ -44,35 +43,45 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     return genomes
 
 
-def categorize_abbrevs(issues: List[RedmineIssue]) -> Dict[str, List[Genome]]:
+def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -> Dict[str, List[Genome]]:
 
+    cur_abbrevs = OrgsUtils.load_abbrevs(cur_abbrevs_path)
     category: Dict[str, List[Genome]] = {
         "new": [],
         "valid": [],
-        "invalid": []
+        "invalid": [],
+        "exists": []
     }
+
     for issue in issues:
         genome = Genome(issue)
         genome.parse()
-        if genome.errors and not genome.organism_abbrev:
+        if not genome.organism_abbrev:
             exp_organism = genome.experimental_organism
             new_org = OrgsUtils.generate_abbrev(exp_organism)
+            print(f"In {issue.id} = {new_org} ({genome.organism_abbrev})")
             genome.organism_abbrev = new_org
-            category["new"].append(genome)
-        else:
-            valid = OrgsUtils.validate_abbrev(genome.organism_abbrev)
-            if valid:
-                category["valid"].append(genome)
+            if new_org.lower() in cur_abbrevs:
+                category["new_exists"].append(genome)
             else:
-                category["invalid"].append(genome)
+                category["new"].append(genome)
+        else:
+            if genome.organism_abbrev.lower() in cur_abbrevs:
+                category["exists"].append(genome)
+            else:
+                valid = OrgsUtils.validate_abbrev(genome.organism_abbrev)
+                if valid:
+                    category["valid"].append(genome)
+                else:
+                    category["invalid"].append(genome)
     
     return category
 
 
-def check_abbrevs(issues: List[RedmineIssue]) -> None:
-    categories = categorize_abbrevs(issues)
+def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
+    categories = categorize_abbrevs(issues, cur_abbrevs_path)
 
-    for cat in ('invalid', 'new', 'valid'):
+    for cat in ('invalid', 'new', 'exists', 'valid'):
         cat_genomes = categories[cat]
         print(f"\n{len(cat_genomes)} {cat.upper()} organism abbrevs:")
         for genome in cat_genomes:
@@ -112,6 +121,10 @@ def main():
     # Optional
     parser.add_argument('--build', type=int,
                         help='Restrict to a given build')
+    
+    parser.add_argument('--current_abbrevs', type=str, required=False,
+                        help='Path to a list of current abbrevs')
+
     args = parser.parse_args()
     
     # Start Redmine API
@@ -122,7 +135,7 @@ def main():
     issues = get_genome_issues(redmine)
 
     if args.check:
-        check_abbrevs(issues)
+        check_abbrevs(issues, args.current_abbrevs)
     elif args.update:
         update_abbrevs(redmine, issues)
 
