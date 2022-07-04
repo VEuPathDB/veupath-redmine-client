@@ -140,14 +140,6 @@ class Genome(RedmineIssue):
         else:
             self._add_error("Missing operation")
     
-    @staticmethod
-    def _check_organism_abbrev(name) -> bool:
-        """Basic check for organism_abbrev format."""
-        if re.search(r'^([A-Za-z0-9_.-]+)$', name):
-            return True
-        else:
-            return False
-
     def _get_gff(self) -> None:
         try:
             gff_path = self.custom["GFF 2 Load"]
