@@ -68,7 +68,10 @@ class Genome(RedmineIssue):
         replace = " +REPLACE" if self.is_replacement else ""
         ops = ",".join(operations)
         desc = f"{desc} ({ops}{gff}{stable_ids}{replace})"
-        return f"  {desc:64}\t{issue.id:8}  {issue.subject}"
+        subject = issue.subject
+        if len(subject) > 80:
+            subject = subject[0:80] + '...'
+        return f"  {desc:64}  {issue.id:8} {subject}"
     
     def parse(self) -> None:
         """
