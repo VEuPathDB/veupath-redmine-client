@@ -20,7 +20,7 @@ from typing import Dict, List
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
 from veupath.redmine.client.redmine_issue import RedmineIssue
-from veupath.redmine.client.orgs_utils import OrgsUtils
+from veupath.redmine.client.orgs_utils import InvalidAbbrev, OrgsUtils
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
@@ -43,7 +43,8 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     return genomes
 
 
-def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -> Dict[str, List[Genome]]:
+def categorize_abbrevs(issues: List[RedmineIssue],
+                       cur_abbrevs_path: str = "") -> Dict[str, List[Genome]]:
 
     cur_abbrevs = OrgsUtils.load_abbrevs(cur_abbrevs_path)
     category: Dict[str, List[Genome]] = {
@@ -79,10 +80,10 @@ def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -
                     category["exists_noreplace"].append(genome)
             else:
                 cur_abbrevs.update([genome.organism_abbrev])
-                valid = OrgsUtils.validate_abbrev(genome.organism_abbrev)
-                if valid:
+                try:
+                    OrgsUtils.validate_abbrev(genome.organism_abbrev)
                     category["valid"].append(genome)
-                else:
+                except InvalidAbbrev:
                     category["invalid"].append(genome)
     
     return category
@@ -130,13 +131,15 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='List and generate organism_abbrevs from Redmine')
     
-    parser.add_argument('--key', type=str, required=True,
+    parser.add_argument('--key', type=str,
                         help='Redmine authentification key')
 
     parser.add_argument('--check', action='store_true', dest='check',
                         help='Show the organism_abbrev status for the selected issues')
     parser.add_argument('--update', action='store_true', dest='update',
                         help='Actually update the organism_abbrevs for the selected issues')
+    parser.add_argument('--one_abbrev', type=str,
+                        help='Check the validity of one abbreviation')
 
     # Optional
     parser.add_argument('--build', type=int,
@@ -147,17 +150,29 @@ def main():
 
     args = parser.parse_args()
     
-    # Start Redmine API
-    redmine = VeupathRedmineClient(key=args.key)
-    if args.build:
-        redmine.set_build(args.build)
+    if args.one_abbrev:
+        try:
+            OrgsUtils.validate_abbrev(args.one_abbrev)
+            print("Abbrev is valid")
+        except InvalidAbbrev as ex:
+            print(ex)
 
-    issues = get_genome_issues(redmine)
+    else:
+        if not args.key:
+            print("Key needed")
+            return
 
-    if args.check:
-        check_abbrevs(issues, args.current_abbrevs)
-    elif args.update:
-        update_abbrevs(redmine, issues)
+        # Start Redmine API
+        redmine = VeupathRedmineClient(key=args.key)
+        if args.build:
+            redmine.set_build(args.build)
+
+        issues = get_genome_issues(redmine)
+
+        if args.check:
+            check_abbrevs(issues, args.current_abbrevs)
+        elif args.update:
+            update_abbrevs(redmine, issues)
 
 
 if __name__ == "__main__":

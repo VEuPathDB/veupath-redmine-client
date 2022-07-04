@@ -19,8 +19,20 @@ import re
 from typing import Set
 
 
+class InvalidOrganism(Exception):
+    def __init__(self, org, added_message="") -> None:
+        message = f"Invalid organism name: '{org}'"
+        if added_message:
+            message += f" ({added_message})"
+        super().__init__(message)
+
+
 class InvalidAbbrev(Exception):
-    pass
+    def __init__(self, abbrev, added_message="") -> None:
+        message = f"Invalid organism abbrev: '{abbrev}'"
+        if added_message:
+            message += f" ({added_message})"
+        super().__init__(message)
 
 
 class OrgsUtils:
@@ -28,21 +40,19 @@ class OrgsUtils:
     abbrev_format = r'^([a-z]{4}|[a-z]sp)[A-z0-9_.-]+$'
 
     @staticmethod
-    def validate_abbrev(abbrev: str) -> bool:
-        if re.match(OrgsUtils.abbrev_format, abbrev):
-            return True
-        else:
-            return False
+    def validate_abbrev(abbrev: str) -> None:
+        if not re.match(OrgsUtils.abbrev_format, abbrev):
+            raise InvalidAbbrev(abbrev, f"does not follow the format '{OrgsUtils.abbrev_format}'")
 
     @staticmethod
     def generate_abbrev(name) -> str:
         
         name = name.strip()
         if name == "":
-            raise Exception("field 'Experimental Organisms' needed")
+            raise InvalidOrganism(name, "field is empty")
         items = name.split(" ")
         if len(items) < 3:
-            raise Exception(f"name is too short ({name})")
+            raise InvalidOrganism(name, "name is too short")
 
         genus = items[0]
         species = items[1]
@@ -62,9 +72,8 @@ class OrgsUtils:
         org_list = (genus[0].lower(), species[0:3], var[0:3], strain_abbrev)
         organism_abbrev = "".join(org_list)
 
-        valid = OrgsUtils.validate_abbrev(organism_abbrev)
-        if not valid:
-            raise InvalidAbbrev(f"Invalid organism abbrev generated: '{organism_abbrev}' from '{name}'")
+        OrgsUtils.validate_abbrev(organism_abbrev)
+
         return organism_abbrev
 
     @staticmethod
