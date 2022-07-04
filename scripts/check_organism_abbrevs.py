@@ -20,7 +20,7 @@ from typing import Dict, List
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
 from veupath.redmine.client.redmine_issue import RedmineIssue
-from veupath.redmine.client.orgs_utils import InvalidAbbrev, OrgsUtils
+from veupath.redmine.client.orgs_utils import InvalidAbbrev, InvalidOrganism, OrgsUtils
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
@@ -138,8 +138,6 @@ def main():
                         help='Show the organism_abbrev status for the selected issues')
     parser.add_argument('--update', action='store_true', dest='update',
                         help='Actually update the organism_abbrevs for the selected issues')
-    parser.add_argument('--one_abbrev', type=str,
-                        help='Check the validity of one abbreviation')
 
     # Optional
     parser.add_argument('--build', type=int,
@@ -148,13 +146,25 @@ def main():
     parser.add_argument('--current_abbrevs', type=str, required=False,
                         help='Path to a list of current abbrevs')
 
+    parser.add_argument('--validate', type=str,
+                        help='Check the validity of one abbreviation')
+    parser.add_argument('--generate_abbrev', type=str,
+                        help='Generate an abbrev from a species full name')
+
     args = parser.parse_args()
     
-    if args.one_abbrev:
+    if args.validate:
         try:
-            OrgsUtils.validate_abbrev(args.one_abbrev)
+            OrgsUtils.validate_abbrev(args.validate)
             print("Abbrev is valid")
         except InvalidAbbrev as ex:
+            print(ex)
+
+    elif args.generate_abbrev:
+        try:
+            abbrev = OrgsUtils.generate_abbrev(args.generate_abbrev)
+            print(f"Abbrev for '{args.generate_abbrev}' is '{abbrev}'")
+        except InvalidOrganism as ex:
             print(ex)
 
     else:
