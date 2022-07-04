@@ -39,10 +39,10 @@ class RNAseq(RedmineIssue):
     
     def to_json_struct(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {
-        "component": "",
-        "species": "",
-        "name": "",
-        "runs": [],
+            "component": "",
+            "species": "",
+            "name": "",
+            "runs": [],
         }
         if self.component:
             data["component"] = self.component
@@ -145,7 +145,8 @@ class RNAseq(RedmineIssue):
                     sample_name = parts[0].strip()
                     
                     if sample_name in sample_names:
-                        raise SamplesParsingException("Several samples have the same name '%s'" % sample_name)
+                        raise SamplesParsingException(
+                            f"Several samples have the same name '{sample_name}'")
                     else:
                         sample_names[sample_name] = True
                     
@@ -154,9 +155,11 @@ class RNAseq(RedmineIssue):
                     
                     if not self._validate_accessions(accessions):
                         if self._validate_accessions(sample_name.split(",")):
-                            raise SamplesParsingException(f"Sample name and accessions are switched? ({line})")
+                            raise SamplesParsingException(
+                                f"Sample name and accessions are switched? ({line})")
                         else:
-                            raise SamplesParsingException(f"Invalid accession among '{accessions}' ({line})")
+                            raise SamplesParsingException(
+                                f"Invalid accession among '{accessions}' ({line})")
                     
                     sample = {
                         "name": self._normalize_name(sample_name),
@@ -189,13 +192,13 @@ class RNAseq(RedmineIssue):
     
     @staticmethod
     def _normalize_name(old_name: str) -> str:
-        """Remove special characters from an organism_abbrev, keep ascii only.
+        """Remove special characters from a name, keep ascii only.
 
         Args:
-            old_name: the organism_abbrev to format.
+            old_name: the name to format.
         
         Returns:
-            The formatted organism_abbrev.
+            The formatted name.
         """
         
         # Remove any diacritics
