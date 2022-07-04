@@ -56,6 +56,8 @@ class OrgsUtils:
 
         genus = items[0]
         species = items[1]
+        if species == "sp.":
+            species = "sp"
 
         if items[2] in ('var.', 'f.'):
             var = items[3]
