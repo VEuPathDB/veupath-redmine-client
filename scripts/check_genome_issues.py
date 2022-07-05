@@ -151,7 +151,8 @@ def report_genome_issues(issues, report: str) -> None:
         lines.append(f"{len(comp_issues)} new genomes:")
         lines.append("<ul>")
         for issue in comp_issues:
-            lines.append(f"<li>{issue.organism_abbrev} ({redmine_link(issue)}) {issue.accession}</li>")
+            lines.append(
+                f"<li>{issue.organism_abbrev} ({issue.redmine_link()}) {issue.accession}</li>")
         lines.append("</ul>")
 
     lines.append("""
@@ -161,12 +162,6 @@ def report_genome_issues(issues, report: str) -> None:
     """)
     with open(report, "w") as report_fh:
         report_fh.write("\n".join(lines))
-
-
-def redmine_link(genome: Genome) -> str:
-    issue = genome.issue
-    link = f"{VeupathParams.redmine_url}/issues/{issue.id}"
-    return f'<a href="{link}">{issue.id}</a>'
 
 
 def extract_genome_issues(issues, output_dir) -> None:

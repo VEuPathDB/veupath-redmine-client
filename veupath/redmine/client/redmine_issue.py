@@ -16,7 +16,7 @@
 
 from .issue_utils import IssueUtils
 from .orgs_utils import InvalidAbbrev, OrgsUtils
-
+from veupath.redmine.client.veupath_params import VeupathParams
 
 class DatatypeException(Exception):
     pass
@@ -72,3 +72,7 @@ class RedmineIssue:
 
     def _get_experimental_organism(self) -> None:
         self.experimental_organism = self.custom["Experimental Organisms"]
+    
+    def redmine_link(self) -> str:
+        link = f"{VeupathParams.redmine_url}/issues/{self.issue.id}"
+        return f'<a href="{link}">{self.issue.id}</a>'
