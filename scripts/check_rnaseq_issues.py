@@ -76,8 +76,11 @@ def report_issues(issues, report: str) -> None:
         print("No valid issue to report")
         return
 
+    build = 0
     components = {}
     for issue in all_issues:
+        version = str(issue.issue.fixed_version)
+        build = int(version[-2:])
         comp = issue.component
         
         if comp not in components:
@@ -88,19 +91,45 @@ def report_issues(issues, report: str) -> None:
     comp_order.sort()
 
     lines = []
-    lines.append(f"{len(all_issues)} datasets handed over:")
-    for comp in comp_order:
-        issues = components[comp]
-        lines.append(f"\t- {len(issues)} {comp}")
 
-    lines.append("New datasets")
+    lines.append("""<html>
+<head>
+<title>BRC4 RNA-Seq report</title>
+<style>
+table {
+  border-collapse: collapse;
+}
+
+td,
+th {
+  border-width: 1px;
+  border-color: black;
+  border-style: solid;
+  font-size: small;
+}
+</style>
+</head>
+<body>
+    """)
+    lines.append(f"<h1>EBI RNA-Seq processing - VEuPathDB build {build}</h1>")
+    lines.append(f"<p>{len(all_issues)} datasets handed over.</p>")
+    lines.append("<ul>")
+    for comp in comp_order:
+        comp_issues = components[comp]
+        lines.append(f"<li>{len(comp_issues)} {comp}</li>")
+    lines.append("</ul>")
+
+    lines.append("<h1>New datasets</h1>")
+    lines.append("<table>")
     all_issues.sort(key=lambda i: (i.component, i.organism_abbrev, i.dataset_name))
-    lines.append("Component\tSpecies\tDataset\tSamples")
+    header = ('Redmine', 'Component', 'Species', 'Dataset', 'Samples')
+    lines.append("<tr><th>" + "</th><th>".join(header) + "</th></tr>")
     for issue in all_issues:
         content = (
-            issue.component, issue.organism_abbrev, issue.dataset_name, str(len(issue.samples))
+            issue.redmine_link(), issue.component, issue.organism_abbrev, issue.dataset_name, str(len(issue.samples))
         )
-        lines.append("\t".join(content))
+        lines.append("<tr><td>" + "</td><td>".join(content) + "</td></tr>")
+    lines.append("</table>")
 
     with open(report, "w") as report_fh:
         report_fh.write("\n".join(lines))
