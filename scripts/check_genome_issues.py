@@ -21,6 +21,8 @@ import argparse
 from typing import Dict, List
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
+from veupath.redmine.client.redmine_issue import RedmineIssue
+from veupath.redmine.client.veupath_params import VeupathParams
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
@@ -92,7 +94,11 @@ def report_genome_issues(issues, report: str) -> None:
     new_genomes: List[Genome] = []
     others: List[Genome] = []
 
+    build = 0
     for issue in all_issues:
+        version = str(issue.issue.fixed_version)
+        build = int(version[-2:])
+
         is_new_genome = False
         for op in issue.operations:
             if op in new_genomes_operations:
@@ -116,27 +122,51 @@ def report_genome_issues(issues, report: str) -> None:
     comp_order.sort()
 
     lines = []
-    lines.append(f"{len(all_issues)} genomes handed over:")
-    lines.append(f"- {len(new_genomes)} new genomes:")
+    lines.append("""<html>
+<head>
+<title>BRC4 genomes report</title>
+</head>
+<body>
+    """)
+    lines.append(f"<h1>EBI genomes processing - VEuPathDB build {build}</h1>")
+    lines.append(f"<p>{len(all_issues)} genomes handed over.</p>")
+    lines.append(f"<p>{len(new_genomes)} new genomes:</p>")
+    lines.append("<ul>")
     for comp in comp_order:
         issues = components[comp]
-        lines.append(f"\t- {len(issues)} {comp}")
+        lines.append(f"<li>{len(issues)} {comp}</li>")
+    lines.append("</ul>")
 
-    lines.append(f"- {len(others)} other operations:")
-    for issue in others:
-        lines.append(f"\t- {issue.organism_abbrev}: {', '.join(issue.operations)}")
-    lines.append("")
+    if others:
+        lines.append(f"<p>{len(others)} other operations:</p>")
+        lines.append("<ul>")
+        for issue in others:
+            lines.append(f"<li>{issue.organism_abbrev} ({redmine_link(issue)})</li>")
+        lines.append("</ul>")
 
     for comp in comp_order:
-        issues = components[comp]
-        issues.sort(key=lambda i: i.organism_abbrev)
-        lines.append(f"{comp}")
-        lines.append(f"{len(issues)} new genomes:")
-        for issue in issues:
-            lines.append(f"- {issue.organism_abbrev} ({issue.accession})")
+        comp_issues: List[Genome] = components[comp]
+        comp_issues.sort(key=lambda i: i.organism_abbrev)
+        lines.append(f"<h2>{comp}</h2>")
+        lines.append(f"{len(comp_issues)} new genomes:")
+        lines.append("<ul>")
+        for issue in comp_issues:
+            lines.append(f"<li>{issue.organism_abbrev} ({redmine_link(issue)}) {issue.accession}</li>")
+        lines.append("</ul>")
 
+    lines.append("""
+    <p></p>
+    </body>
+</html>
+    """)
     with open(report, "w") as report_fh:
         report_fh.write("\n".join(lines))
+
+
+def redmine_link(genome: Genome) -> str:
+    issue = genome.issue
+    link = f"{VeupathParams.redmine_url}/issues/{issue.id}"
+    return f'<a href="{link}">{issue.id}</a>'
 
 
 def extract_genome_issues(issues, output_dir) -> None:
