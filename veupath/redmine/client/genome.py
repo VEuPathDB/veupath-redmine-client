@@ -67,8 +67,10 @@ class Genome(RedmineIssue):
         stable_ids = " +STABLE_IDS" if "Allocate stable ids" in self.operations else ""
         replace = " +REPLACE" if self.is_replacement else ""
         ops = ",".join(operations)
-        desc = f"{desc} ({ops}{gff}{stable_ids}{replace})"
+        desc = f"{desc}\t({ops}{gff}{stable_ids}{replace})"
         subject = issue.subject
+        if self.organism_abbrev:
+            subject = f"{self.organism_abbrev:20}  {subject}"
         if len(subject) > 80:
             subject = subject[0:80] + '...'
         return f"  {desc:64}  {issue.id:8} {subject}"
