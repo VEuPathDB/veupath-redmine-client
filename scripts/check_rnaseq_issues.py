@@ -25,6 +25,7 @@ from veupath.redmine.client.rnaseq import RNAseq
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
+no_spliced_components = ('TriTrypDB')
 
 
 def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
@@ -40,6 +41,11 @@ def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
     print(f"{len(datasets)} issues for RNA-Seq")
     
     return datasets
+
+
+def add_no_spliced(issue: RNAseq) -> None:
+    if issue.component in no_spliced_components:
+        issue.no_spliced = True
 
 
 def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
@@ -145,6 +151,7 @@ def extract_issues(issues, output_dir) -> None:
     else:
         all_datasets_structs = []
         for dataset in all_issues:
+            add_no_spliced(dataset)
             component = dataset.component
             comp_dir = os.path.join(output_dir, component)
             try:

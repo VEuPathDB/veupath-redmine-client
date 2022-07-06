@@ -36,6 +36,7 @@ class RNAseq(RedmineIssue):
         super().__init__(issue)
         self.dataset_name = ""
         self.samples = []
+        self.no_spliced = False
     
     def to_json_struct(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {
@@ -52,6 +53,8 @@ class RNAseq(RedmineIssue):
             data["name"] = self.dataset_name
         if self.samples:
             data["runs"] = self.samples
+        if self.no_spliced:
+            data["no_spliced"] = True
 
         return data
     
