@@ -132,6 +132,7 @@ class RNAseq(RedmineIssue):
 
         try:
             sample_names = dict()
+            sample_errors = []
             for line in lines:
                 line = line.strip()
                 if line == "":
@@ -148,8 +149,8 @@ class RNAseq(RedmineIssue):
                     sample_name = parts[0].strip()
                     
                     if sample_name in sample_names:
-                        raise SamplesParsingException(
-                            f"Several samples have the same name '{sample_name}'")
+                        sample_errors.append(f"repeated name {sample_name}")
+                        continue
                     else:
                         sample_names[sample_name] = True
                     
@@ -158,11 +159,11 @@ class RNAseq(RedmineIssue):
                     
                     if not self._validate_accessions(accessions):
                         if self._validate_accessions(sample_name.split(",")):
-                            raise SamplesParsingException(
-                                f"Sample name and accessions are switched? ({line})")
+                            sample_errors.append(f"name and accession switched? ({line})")
+                            continue
                         else:
-                            raise SamplesParsingException(
-                                f"Invalid accession among '{accessions}' ({line})")
+                            sample_errors.append(f"Invalid accession in '{accessions}' ({line})")
+                            continue
                     
                     sample = {
                         "name": self._normalize_name(sample_name),
@@ -170,7 +171,12 @@ class RNAseq(RedmineIssue):
                     }
                     samples.append(sample)
                 else:
-                    raise SamplesParsingException(f"Sample line doesn't have 2 parts ({line})")
+                    sample_errors.append(f"sample line doesn't have 2 parts ({line})")
+                    continue
+            
+            if sample_errors:
+                raise SamplesParsingException(
+                    f"{len(sample_errors)} errors: {'; '.join(sample_errors)}")
         except SamplesParsingException as e:
             self._add_error(str(e))
         
