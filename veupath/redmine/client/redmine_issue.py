@@ -18,6 +18,7 @@ from .issue_utils import IssueUtils
 from .orgs_utils import InvalidAbbrev, OrgsUtils
 from veupath.redmine.client.veupath_params import VeupathParams
 
+
 class DatatypeException(Exception):
     pass
 

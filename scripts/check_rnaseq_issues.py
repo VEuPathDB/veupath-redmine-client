@@ -132,7 +132,11 @@ th {
     lines.append("<tr><th>" + "</th><th>".join(header) + "</th></tr>")
     for issue in all_issues:
         content = (
-            issue.redmine_link(), issue.component, issue.organism_abbrev, issue.dataset_name, str(len(issue.samples))
+            issue.redmine_link(),
+            issue.component,
+            issue.organism_abbrev,
+            issue.dataset_name,
+            str(len(issue.samples))
         )
         lines.append("<tr><td>" + "</td><td>".join(content) + "</td></tr>")
     lines.append("</table>")

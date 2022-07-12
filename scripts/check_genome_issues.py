@@ -21,8 +21,6 @@ import argparse
 from typing import Dict, List
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
-from veupath.redmine.client.redmine_issue import RedmineIssue
-from veupath.redmine.client.veupath_params import VeupathParams
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
@@ -141,7 +139,7 @@ def report_genome_issues(issues, report: str) -> None:
         lines.append(f"<p>{len(others)} other operations:</p>")
         lines.append("<ul>")
         for issue in others:
-            lines.append(f"<li>{issue.organism_abbrev} ({redmine_link(issue)})</li>")
+            lines.append(f"<li>{issue.organism_abbrev} ({issue.redmine_link(issue)})</li>")
         lines.append("</ul>")
 
     for comp in comp_order:
