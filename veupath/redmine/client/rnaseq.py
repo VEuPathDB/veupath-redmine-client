@@ -67,13 +67,14 @@ class RNAseq(RedmineIssue):
         return line
     
     def short_str(self) -> str:
+        org = self.organism_abbrev
         desc = "; ".join(self.errors) if self.errors else "VALID"
         issue = self.issue
         
         subject = issue.subject
         if len(subject) > 80:
             subject = subject[0:80] + '...'
-        return f"  {desc:64}\t{issue.id:8}  {subject}"
+        return f"  {org}\t{desc:50}\t{issue.id:8}  {subject}"
     
     def parse(self) -> None:
         """
