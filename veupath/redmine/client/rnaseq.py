@@ -133,6 +133,7 @@ class RNAseq(RedmineIssue):
 
         try:
             sample_names = dict()
+            accessions_count: dict = dict()
             sample_errors = []
             for line in lines:
                 line = line.strip()
@@ -166,6 +167,13 @@ class RNAseq(RedmineIssue):
                             sample_errors.append(f"Invalid accession in '{accessions}' ({line})")
                             continue
                     
+                    # Check uniqueness of SRA ids within this dataset
+                    for accession in accessions:
+                        if accession in accessions_count:
+                            accessions_count[accession] += 1
+                        else:
+                            accessions_count[accession] = 1
+                    
                     sample = {
                         "name": self._normalize_name(sample_name),
                         "accessions": accessions
@@ -175,6 +183,14 @@ class RNAseq(RedmineIssue):
                     sample_errors.append(f"sample line doesn't have 2 parts ({line})")
                     continue
             
+            duplicated = []
+            for accession, count in accessions_count.items():
+                if count > 1:
+                    duplicated.append(f"{accession} (x{count})")
+            if duplicated:
+                raise SamplesParsingException(
+                    f"{len(duplicated)} accessions duplicates: {'; '.join(duplicated)}")
+
             if sample_errors:
                 raise SamplesParsingException(
                     f"{len(sample_errors)} errors: {'; '.join(sample_errors)}")
