@@ -19,6 +19,7 @@ import os
 import json
 import argparse
 from typing import Dict, List
+from Bio import Entrez
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
 
@@ -26,8 +27,7 @@ supported_team = "Data Processing (EBI)"
 supported_status_id = 20
 
 
-def get_genome_issues(redmine: VeupathRedmineClient,
-                      check_gff: bool = False, email: str = '') -> list:
+def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     """Get issues for all genomes"""
 
     redmine.add_filter("team", supported_team)
@@ -40,8 +40,6 @@ def get_genome_issues(redmine: VeupathRedmineClient,
         for issue in issues:
             genome = Genome(issue)
             genome.parse()
-            if check_gff:
-                genome.check_datatype(email)
 
             genomes.append(genome)
         redmine.remove_filter("datatype")
@@ -228,10 +226,8 @@ def main():
                         help='Restrict to a given component')
     parser.add_argument('--any_team', action='store_true', dest='any_team',
                         help='Do not filter by the processing team')
-    parser.add_argument('--gff', action='store_true', dest='gff',
-                        help='Check if there is a gff if it is expected, and vice versa')
     parser.add_argument('--email', type=str,
-                        help='Email to use for Entrez to check the genome')
+                        help='Set this email to use Entrez and check the INSDC records')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -241,7 +237,9 @@ def main():
     if args.component:
         redmine.set_component(args.component)
 
-    issues = get_genome_issues(redmine, check_gff=args.gff, email=args.email)
+    if args.email:
+        Entrez.email = args.email
+    issues = get_genome_issues(redmine)
 
     if args.summary:
         summarize_genome_issues(issues)
