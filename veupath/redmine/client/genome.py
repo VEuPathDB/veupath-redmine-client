@@ -183,7 +183,7 @@ class Genome(RedmineIssue):
             return self.insdc_metadata
 
         summary: Dict[str, Any] = dict()
-        if Entrez.email:
+        if Entrez.email and self.accession:
             handle = Entrez.esearch(db="assembly", term=self.accession, retmax='5')
             try:
                 record = Entrez.read(handle)
