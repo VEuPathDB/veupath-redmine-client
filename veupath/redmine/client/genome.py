@@ -35,6 +35,16 @@ class Genome(RedmineIssue):
         self.is_replacement = False
         self.operations = []
         self.accession = ""
+        self.annotated = self._is_annotated()
+    
+    def _is_annotated(self) -> bool:
+        if self.datatype == "Genome sequence and Annotation":
+            return True
+        elif self.datatype == "Assembled genome sequence without annotation":
+            return False
+        else:
+            self._add_error(f"unsupported datatype for genome: {self.datatype}")
+            return False
     
     def to_json_struct(self) -> Dict[str, Any]:
         data = {
@@ -162,3 +172,19 @@ class Genome(RedmineIssue):
 
         if replace.startswith("Yes"):
             self.is_replacement = True
+
+    def check_datatype(self, email: str = '') -> None:
+        """
+        Check if we expect an annotation with a gff from INSDC/GFF2Load
+        """
+
+        if email:
+            print(f"Check Entrez for {self.accession}")
+        else:
+            has_gff = False
+            if self.gff:
+                has_gff = True
+            if has_gff and not self.annotated:
+                self._add_error("Got a gff but not expected to be annotated")
+            # if not has_gff and self.annotated:
+            #     self._add_error("Got no gff but expected to be annotated")
