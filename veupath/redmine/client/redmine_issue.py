@@ -36,6 +36,7 @@ class RedmineIssue:
         self.component = ""
         self.organism_abbrev = ""
         self.experimental_organism = ""
+        self.datatype = self._get_datatype()
         self.errors = []
     
     def _add_error(self, msg: str) -> None:
@@ -73,6 +74,12 @@ class RedmineIssue:
 
     def _get_experimental_organism(self) -> None:
         self.experimental_organism = self.custom["Experimental Organisms"]
+    
+    def _get_datatype(self) -> str:
+        try:
+            return self.custom["DataType"]
+        except KeyError:
+            return ''
     
     def redmine_link(self) -> str:
         link = f"{VeupathParams.redmine_url}/issues/{self.issue.id}"
