@@ -19,6 +19,7 @@ import os
 import json
 import argparse
 from typing import Dict, List
+from Bio import Entrez
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
 
@@ -36,23 +37,24 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
         redmine.add_filter("datatype", datatype)
         issues = redmine.get_issues()
         print(f"{len(issues)} issues for datatype '{datatype}'")
-        genomes += issues
+        for issue in issues:
+            genome = Genome(issue)
+            genome.parse()
+
+            genomes.append(genome)
         redmine.remove_filter("datatype")
     print(f"{len(genomes)} issues for genomes")
     
     return genomes
 
 
-def categorize_genome_issues(issues) -> Dict[str, List[Genome]]:
+def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]]:
     validity: Dict[str, List[Genome]] = {
         'valid': [],
         'invalid': [],
     }
     operations: Dict[str, List[Genome]] = {}
-    for issue in issues:
-        genome = Genome(issue)
-        genome.parse()
-
+    for genome in genomes:
         if genome.errors:
             validity['invalid'].append(genome)
         else:
@@ -68,14 +70,14 @@ def categorize_genome_issues(issues) -> Dict[str, List[Genome]]:
     return categories
 
 
-def summarize_genome_issues(issues) -> None:
-    categories = categorize_genome_issues(issues)
+def summarize_genome_issues(genomes) -> None:
+    categories = categorize_genome_issues(genomes)
     for key in categories:
         print(f"{len(categories[key])} {key}")
 
 
-def check_genome_issues(issues) -> None:
-    categories = categorize_genome_issues(issues)
+def check_genome_issues(genomes) -> None:
+    categories = categorize_genome_issues(genomes)
     for key in categories:
         print(f"{len(categories[key])} {key}:")
         genomes = categories[key]
@@ -83,9 +85,9 @@ def check_genome_issues(issues) -> None:
             print(genome.short_str())
 
 
-def report_genome_issues(issues, report: str) -> None:
-    categories = categorize_genome_issues(issues)
-    all_issues: List[Genome] = categories['valid']
+def report_genome_issues(genomes, report: str) -> None:
+    categories = categorize_genome_issues(genomes)
+    all_genomes: List[Genome] = categories['valid']
 
     new_genomes_operations = ("Load from INSDC", "Load from RefSeq", "Load from EnsEMBL")
 
@@ -93,29 +95,29 @@ def report_genome_issues(issues, report: str) -> None:
     others: List[Genome] = []
 
     build = 0
-    for issue in all_issues:
-        version = str(issue.issue.fixed_version)
+    for genome in all_genomes:
+        version = str(genome.issue.fixed_version)
         build = int(version[-2:])
 
         is_new_genome = False
-        for op in issue.operations:
+        for op in genome.operations:
             if op in new_genomes_operations:
                 is_new_genome = True
         
         if is_new_genome:
-            new_genomes.append(issue)
+            new_genomes.append(genome)
         else:
-            others.append(issue)
+            others.append(genome)
             others.sort(key=lambda i: i.organism_abbrev)
     
     components = {}
-    for issue in new_genomes:
-        comp = issue.component
+    for genome in new_genomes:
+        comp = genome.component
         
         if comp not in components:
-            components[comp] = [issue]
+            components[comp] = [genome]
         else:
-            components[comp].append(issue)
+            components[comp].append(genome)
     comp_order = list(components.keys())
     comp_order.sort()
 
@@ -127,19 +129,19 @@ def report_genome_issues(issues, report: str) -> None:
 <body>
     """)
     lines.append(f"<h1>EBI genomes processing - VEuPathDB build {build}</h1>")
-    lines.append(f"<p>{len(all_issues)} genomes handed over.</p>")
+    lines.append(f"<p>{len(all_genomes)} genomes handed over.</p>")
     lines.append(f"<p>{len(new_genomes)} new genomes:</p>")
     lines.append("<ul>")
     for comp in comp_order:
-        issues = components[comp]
-        lines.append(f"<li>{len(issues)} {comp}</li>")
+        genomes = components[comp]
+        lines.append(f"<li>{len(genomes)} {comp}</li>")
     lines.append("</ul>")
 
     if others:
         lines.append(f"<p>{len(others)} other operations:</p>")
         lines.append("<ul>")
-        for issue in others:
-            lines.append(f"<li>{issue.organism_abbrev} ({issue.redmine_link(issue)})</li>")
+        for genome in others:
+            lines.append(f"<li>{genome.organism_abbrev} ({genome.redmine_link(genome)})</li>")
         lines.append("</ul>")
 
     for comp in comp_order:
@@ -148,9 +150,9 @@ def report_genome_issues(issues, report: str) -> None:
         lines.append(f"<h2>{comp}</h2>")
         lines.append(f"{len(comp_issues)} new genomes:")
         lines.append("<ul>")
-        for issue in comp_issues:
+        for genome in comp_issues:
             lines.append(
-                f"<li>{issue.organism_abbrev} ({issue.redmine_link()}) {issue.accession}</li>")
+                f"<li>{genome.organism_abbrev} ({genome.redmine_link()}) {genome.accession}</li>")
         lines.append("</ul>")
 
     lines.append("""
@@ -224,6 +226,8 @@ def main():
                         help='Restrict to a given component')
     parser.add_argument('--any_team', action='store_true', dest='any_team',
                         help='Do not filter by the processing team')
+    parser.add_argument('--email', type=str,
+                        help='Set this email to use Entrez and check the INSDC records')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -233,6 +237,8 @@ def main():
     if args.component:
         redmine.set_component(args.component)
 
+    if args.email:
+        Entrez.email = args.email
     issues = get_genome_issues(redmine)
 
     if args.summary:

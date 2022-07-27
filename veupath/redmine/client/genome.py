@@ -18,6 +18,8 @@ import re
 from typing import Any, Dict
 from .issue_utils import IssueUtils
 from .redmine_issue import RedmineIssue, DatatypeException
+from Bio import Entrez
+from Bio.Entrez.Parser import ValidationError
 
 
 class Genome(RedmineIssue):
@@ -35,6 +37,17 @@ class Genome(RedmineIssue):
         self.is_replacement = False
         self.operations = []
         self.accession = ""
+        self.annotated = self._is_annotated()
+        self.insdc_metadata = dict()
+    
+    def _is_annotated(self) -> bool:
+        if self.datatype == "Genome sequence and Annotation":
+            return True
+        elif self.datatype == "Assembled genome sequence without annotation":
+            return False
+        else:
+            self.add_error(f"Unsupported datatype for genome: {self.datatype}")
+            return False
     
     def to_json_struct(self) -> Dict[str, Any]:
         data = {
@@ -100,6 +113,8 @@ class Genome(RedmineIssue):
         self._get_operations()
         self._get_gff()
         self._get_replacement()
+        self._get_insdc_metadata()
+        self._check_datatype()
     
     def _check_accession(self, accession: str) -> str:
         """
@@ -125,12 +140,12 @@ class Genome(RedmineIssue):
     def _get_insdc_accession(self) -> None:
         accession = self.custom["GCA number"]
         if not accession:
-            self._add_error("INSDC accession missing")
+            self.add_error("INSDC accession missing")
             return
 
         accession = self._check_accession(accession)
         if not accession:
-            self._add_error("Wrong INSDC accession format")
+            self.add_error("Wrong INSDC accession format")
         else:
             self.accession = accession
 
@@ -143,7 +158,7 @@ class Genome(RedmineIssue):
         if operations:
             self.operations = operations
         else:
-            self._add_error("Missing operation")
+            self.add_error("Missing operation")
     
     def _get_gff(self) -> None:
         try:
@@ -162,3 +177,60 @@ class Genome(RedmineIssue):
 
         if replace.startswith("Yes"):
             self.is_replacement = True
+    
+    def _get_insdc_metadata(self) -> Dict[str, Any]:
+        if self.insdc_metadata:
+            return self.insdc_metadata
+
+        summary: Dict[str, Any] = dict()
+        if Entrez.email and self.accession:
+            handle = Entrez.esearch(db="assembly", term=self.accession, retmax='5')
+            try:
+                record = Entrez.read(handle)
+            except ValidationError:
+                self.errors("Validation error")
+                return summary
+            ids = record["IdList"]
+
+            if len(ids) == 0:
+                self.add_error("Assembly not found in INSDC")
+            elif len(ids) > 1:
+                self.add_error(f"{len(ids)} assemblies found for this accession")
+            else:
+                id = ids[0]
+                summary_full = self.get_assembly_metadata(id)
+                summary = summary_full["DocumentSummarySet"]["DocumentSummary"][0]
+                self.insdc_metadata = summary
+        return summary
+
+    def get_assembly_metadata(self, id):
+        esummary_handle = Entrez.esummary(db="assembly", id=id, report="full")
+        esummary_record = Entrez.read(esummary_handle)
+        return esummary_record
+
+    def assembly_is_annotated(self) -> bool:
+        properties = self.insdc_metadata["PropertyList"]
+        if self.accession.startswith("GCA") and "has_annotation" in properties:
+            return True
+        elif self.accession.startswith("GCF") and "refseq_has_annotation" in properties:
+            return True
+        else:
+            return False
+
+    def _check_datatype(self) -> None:
+        """
+        Check if we expect an annotation with a gff from INSDC/GFF2Load
+        """
+        if not self.insdc_metadata:
+            return
+
+        has_gff = False
+        if self.gff:
+            has_gff = True
+        else:
+            is_annotated = self.assembly_is_annotated()
+
+        if (has_gff or is_annotated) and not self.annotated:
+            self.add_error("Got a gff but not expected to be annotated")
+        if not (has_gff or is_annotated) and self.annotated:
+            self.add_error("Got no gff but expected to be annotated")

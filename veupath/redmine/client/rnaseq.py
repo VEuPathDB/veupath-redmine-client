@@ -102,7 +102,7 @@ class RNAseq(RedmineIssue):
         if name:
             self.dataset_name = name
         else:
-            self._add_error("Missing dataset name")
+            self.add_error("Missing dataset name")
 
     def _get_samples(self) -> None:
         samples_str = self.custom["Sample Names"]
@@ -111,9 +111,9 @@ class RNAseq(RedmineIssue):
             if samples:
                 self.samples = samples
             else:
-                self._add_error("Wrong sample format")
+                self.add_error("Wrong sample format")
         else:
-            self._add_error("Missing samples")
+            self.add_error("Missing samples")
     
     def _parse_samples(self, sample_str: str) -> List[Dict]:
         """Parse a list of samples from a Redmine task.
@@ -195,7 +195,7 @@ class RNAseq(RedmineIssue):
                 raise SamplesParsingException(
                     f"{len(sample_errors)} errors: {'; '.join(sample_errors)}")
         except SamplesParsingException as e:
-            self._add_error(str(e))
+            self.add_error(str(e))
         
         return samples
 

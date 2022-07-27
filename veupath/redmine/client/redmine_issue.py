@@ -36,9 +36,10 @@ class RedmineIssue:
         self.component = ""
         self.organism_abbrev = ""
         self.experimental_organism = ""
+        self.datatype = self._get_datatype()
         self.errors = []
     
-    def _add_error(self, msg: str) -> None:
+    def add_error(self, msg: str) -> None:
         self.errors.append(msg)
 
     def _get_component(self) -> None:
@@ -50,9 +51,9 @@ class RedmineIssue:
         if len(components) == 1:
             self.component = components[0]
         elif len(components) == 0:
-            self._add_error("No component")
+            self.add_error("No component")
         elif len(components) > 1:
-            self._add_error("Several components")
+            self.add_error("Several components")
     
     def _get_organism_abbrev(self) -> None:
         try:
@@ -66,13 +67,19 @@ class RedmineIssue:
             try:
                 OrgsUtils.validate_abbrev(abbrev)
             except InvalidAbbrev:
-                self._add_error(f"Invalid organism_abbrev: {abbrev}")
+                self.add_error(f"Invalid organism_abbrev: {abbrev}")
             self.organism_abbrev = abbrev
         else:
-            self._add_error("Missing organism_abbrev")
+            self.add_error("Missing organism_abbrev")
 
     def _get_experimental_organism(self) -> None:
         self.experimental_organism = self.custom["Experimental Organisms"]
+    
+    def _get_datatype(self) -> str:
+        try:
+            return self.custom["DataType"]
+        except KeyError:
+            return ''
     
     def redmine_link(self) -> str:
         link = f"{VeupathParams.redmine_url}/issues/{self.issue.id}"
