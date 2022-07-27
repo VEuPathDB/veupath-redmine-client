@@ -9,7 +9,7 @@ setup(
     author_email='mbarba@ebi.ac.uk',
     license='Apache Software License',
     packages=['veupath/redmine/client'],
-    install_requires=['python-redmine', 'wheel'],
+    install_requires=['python-redmine', 'wheel', 'biopython'],
 
     scripts=['scripts/check_genome_issues.py',
              'scripts/check_rnaseq_issues.py',
