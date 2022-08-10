@@ -151,8 +151,16 @@ def report_genome_issues(genomes, report: str) -> None:
         lines.append(f"{len(comp_issues)} new genomes:")
         lines.append("<ul>")
         for genome in comp_issues:
-            lines.append(
-                f"<li>{genome.organism_abbrev} ({genome.redmine_link()}) {genome.accession}</li>")
+            line_text = f"{genome.organism_abbrev} ({genome.redmine_link()}) {genome.accession}"
+            addition = []
+            if genome.is_replacement:
+                addition.append("replacement")
+            if genome.gff:
+                addition.append("annotation from separate GFF")
+            if addition:
+                addition_text = ", ".join(addition)
+                line_text += f" ({addition_text})"
+            lines.append(f"<li>{line_text}</li>")
         lines.append("</ul>")
 
     lines.append("""
