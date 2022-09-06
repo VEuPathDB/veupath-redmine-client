@@ -30,11 +30,11 @@ class IssueUtils:
         """
         
         cfs = {}
-        try:
-            for c in issue.custom_fields:
+        for c in issue.custom_fields:
+            try:
                 cfs[c["name"]] = c["value"]
-        except exceptions.ResourceAttrError:
-            pass
+            except exceptions.ResourceAttrError:
+                pass
         return cfs
 
     @staticmethod
