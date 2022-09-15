@@ -35,7 +35,6 @@ class Genome(RedmineIssue):
         super().__init__(issue)
         self.gff = ""
         self.is_replacement = False
-        self.operations = []
         self.accession = ""
         self.annotated = self._is_annotated()
         self.insdc_metadata = dict()
@@ -106,11 +105,7 @@ class Genome(RedmineIssue):
         """
         Extract genome metadata from a Redmine issue
         """
-        self._get_component()
-        self._get_organism_abbrev()
-        self._get_experimental_organism()
         self._get_insdc_accession()
-        self._get_operations()
         self._get_gff()
         self._get_replacement()
         self._get_insdc_metadata()
@@ -148,17 +143,6 @@ class Genome(RedmineIssue):
             self.add_error("Wrong INSDC accession format")
         else:
             self.accession = accession
-
-    def _get_operations(self) -> None:
-        try:
-            operations = self.custom["EBI operations"]
-        except KeyError:
-            operations = []
-
-        if operations:
-            self.operations = operations
-        else:
-            self.add_error("Missing operation")
     
     def _get_gff(self) -> None:
         try:

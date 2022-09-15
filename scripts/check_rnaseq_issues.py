@@ -52,6 +52,7 @@ def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
     validity: Dict[str, List[RNAseq]] = {
         'valid': [],
         'invalid': [],
+        'reference_change': [],
     }
     for issue in issues:
         dataset = RNAseq(issue)
@@ -60,6 +61,8 @@ def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
         if dataset.errors:
             validity['invalid'].append(dataset)
         else:
+            if dataset.is_ref_change:
+                validity['reference_change'].append(dataset)
             validity['valid'].append(dataset)
     
     categories = validity
@@ -155,6 +158,9 @@ def store_issues(issues, output_dir) -> None:
     else:
         all_datasets_structs = []
         for dataset in all_issues:
+            if dataset.is_ref_change:
+                continue
+
             add_no_spliced(dataset)
             component = dataset.component
             comp_dir = os.path.join(output_dir, component)
