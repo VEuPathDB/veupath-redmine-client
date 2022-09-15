@@ -145,7 +145,7 @@ th {
         report_fh.write("\n".join(lines))
 
 
-def extract_issues(issues, output_dir) -> None:
+def store_issues(issues, output_dir) -> None:
 
     categories = categorize_issues(issues)
     all_issues: List[RNAseq] = categories['valid']
@@ -222,7 +222,7 @@ def main():
     elif args.report:
         report_issues(issues, args.report)
     elif args.store:
-        extract_issues(issues, args.store)
+        store_issues(issues, args.store)
 
 
 if __name__ == "__main__":
