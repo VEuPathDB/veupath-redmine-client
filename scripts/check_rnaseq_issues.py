@@ -163,7 +163,7 @@ def extract_issues(issues, output_dir) -> None:
             except FileExistsError:
                 pass
         
-            dataset_name = dataset.dataset_name
+            dataset_name = f"{dataset.organism_abbrev}_{dataset.dataset_name}"
             organism_file = os.path.join(comp_dir, dataset_name + ".json")
             with open(organism_file, "w") as f:
                 dataset_struct = dataset.to_json_struct()
