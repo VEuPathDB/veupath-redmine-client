@@ -60,7 +60,17 @@ def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]
         else:
             validity['valid'].append(genome)
         
+        if genome.gff:
+            gff_operation = "Load from GFF"
+            if gff_operation in operations:
+                operations[gff_operation].append(genome)
+            else:
+                operations[gff_operation] = [genome]
+
         for key in genome.operations:
+            if genome.gff and key in ("Load from INSDC", "Load from RefSeq"):
+                continue
+
             if key in operations:
                 operations[key].append(genome)
             else:
@@ -181,6 +191,7 @@ def store_genome_issues(issues, output_dir) -> None:
         'Allocate stable ids': 'stable_ids',
         'Load from EnSEMBL': 'copy_ensembl',
         'Patch build': 'patch_build',
+        'Load from GFF': 'load_gff',
         'Other': 'other',
     }
     no_extraction = (
