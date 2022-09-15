@@ -172,7 +172,7 @@ def report_genome_issues(genomes, report: str) -> None:
         report_fh.write("\n".join(lines))
 
 
-def extract_genome_issues(issues, output_dir) -> None:
+def store_genome_issues(issues, output_dir) -> None:
 
     group_names = {
         'Reference change': 'reference_change',
@@ -256,7 +256,7 @@ def main():
     elif args.report:
         report_genome_issues(issues, args.report)
     elif args.store:
-        extract_genome_issues(issues, args.store)
+        store_genome_issues(issues, args.store)
 
 
 if __name__ == "__main__":
