@@ -37,6 +37,9 @@ class RNAseq(RedmineIssue):
         self.dataset_name = ""
         self.samples = []
         self.no_spliced = False
+        self.is_ref_change = False
+        if "Reference change" in self.operations:
+            self.is_ref_change = True
     
     def to_json_struct(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {
@@ -64,11 +67,15 @@ class RNAseq(RedmineIssue):
             line = line + f' (ERRORS: {", ".join(self.errors)})'
         else:
             line = line + ' (valid issue)'
+        if self.is_ref_change:
+            line += f" (Reference change)" 
         return line
     
     def short_str(self) -> str:
         org = self.organism_abbrev
         desc = "; ".join(self.errors) if self.errors else "VALID"
+        if self.is_ref_change:
+            desc += f" (Reference change)"
         issue = self.issue
         
         subject = issue.subject
@@ -92,10 +99,9 @@ class RNAseq(RedmineIssue):
         """
         Extract RNA-Seq metadata from a Redmine issue
         """
-        self._get_component()
-        self._get_organism_abbrev()
-        self._get_dataset_name()
-        self._get_samples()
+        if not self.is_ref_change:
+            self._get_dataset_name()
+            self._get_samples()
     
     def _get_dataset_name(self) -> None:
         name = self.custom["Internal dataset name"]
