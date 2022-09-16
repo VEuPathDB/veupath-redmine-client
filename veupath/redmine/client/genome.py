@@ -28,6 +28,7 @@ class Genome(RedmineIssue):
     supported_datatypes = (
         "Genome sequence and Annotation",
         "Assembled genome sequence without annotation",
+        "Gene Models",
     )
     insdc_pattern = r'^GC[AF]_\d{9}(\.\d+)?$'
 
@@ -42,10 +43,7 @@ class Genome(RedmineIssue):
     def _is_annotated(self) -> bool:
         if self.datatype == "Genome sequence and Annotation":
             return True
-        elif self.datatype == "Assembled genome sequence without annotation":
-            return False
         else:
-            self.add_error(f"Unsupported datatype for genome: {self.datatype}")
             return False
     
     def to_json_struct(self) -> Dict[str, Any]:
@@ -92,11 +90,9 @@ class Genome(RedmineIssue):
         Given a Veupath Redmine genome issue, extracts relevant data
         """
         
-        # First, check that it is supposed to be a genome issue
-        
-        # Next, check the datatype
+        # First, check the datatype
         if self.custom["DataType"] not in self.supported_datatypes:
-            raise DatatypeException(self.custom["DataType"])
+            raise DatatypeException(f"Datatype not supported: '{self.custom['DataType']}'")
 
         # Next, get the data
         self.parse_genome()
