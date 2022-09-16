@@ -22,6 +22,7 @@ from veupath.redmine.client.issue_utils import IssueUtils
 supported_datatypes = (
     "Genome sequence and Annotation",
     "Assembled genome sequence without annotation",
+    "Gene Models",
     "RNA-seq"
 )
 supported_team = "Data Processing (EBI)"
