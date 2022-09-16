@@ -99,7 +99,11 @@ class RNAseq(RedmineIssue):
         """
         Extract RNA-Seq metadata from a Redmine issue
         """
-        if not self.is_ref_change:
+        if self.is_ref_change:
+            pass
+        elif "Other" in self.operations:
+            pass
+        else:
             self._get_dataset_name()
             self._get_samples()
     
