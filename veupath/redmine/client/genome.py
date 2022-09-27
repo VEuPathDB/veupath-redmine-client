@@ -95,7 +95,10 @@ class Genome(RedmineIssue):
             raise DatatypeException(f"Datatype not supported: '{self.custom['DataType']}'")
 
         # Next, get the data
-        self.parse_genome()
+        if "Patch build" in self.operations:
+            return
+        else:
+            self.parse_genome()
 
     def parse_genome(self) -> None:
         """
@@ -174,9 +177,9 @@ class Genome(RedmineIssue):
 
             if len(ids) == 0:
                 self.add_error("Assembly not found in INSDC")
-            elif len(ids) > 1:
-                self.add_error(f"{len(ids)} assemblies found for this accession")
             else:
+                if len(ids) > 1:
+                    print(f"{len(ids)} assemblies found for {self.accession}, using the first one ({ids[0]})")
                 id = ids[0]
                 summary_full = self.get_assembly_metadata(id)
                 summary = summary_full["DocumentSummarySet"]["DocumentSummary"][0]
@@ -207,10 +210,10 @@ class Genome(RedmineIssue):
         has_gff = False
         if self.gff:
             has_gff = True
-        else:
-            is_annotated = self.assembly_is_annotated()
-
+        is_annotated = self.assembly_is_annotated()
+        
         if (has_gff or is_annotated) and not self.annotated:
             self.add_error("Got a gff but not expected to be annotated")
         if not (has_gff or is_annotated) and self.annotated:
             self.add_error("Got no gff but expected to be annotated")
+
