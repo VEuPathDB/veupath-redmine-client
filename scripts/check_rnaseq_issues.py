@@ -53,6 +53,7 @@ def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
         'valid': [],
         'invalid': [],
         'reference_change': [],
+        'new': [],
         'other': [],
     }
     for issue in issues:
@@ -66,6 +67,8 @@ def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
                 validity['reference_change'].append(dataset)
             elif "Other" in dataset.operations:
                 validity['other'].append(dataset)
+            else:
+                validity['new'].append(dataset)
             validity['valid'].append(dataset)
     
     categories = validity
@@ -88,9 +91,13 @@ def report_issues(issues, report: str) -> None:
         print("No valid issue to report")
         return
 
+    new: List[RNAseq] = categories['new']
+    remaps: List[RNAseq] = categories['reference_change']
+    others: List[RNAseq] = categories['other']
+
     build = 0
     components = {}
-    for issue in all_issues:
+    for issue in new:
         version = str(issue.issue.fixed_version)
         build = int(version[-2:])
         comp = issue.component
@@ -124,19 +131,35 @@ th {
 <body>
     """)
     lines.append(f"<h1>EBI RNA-Seq processing - VEuPathDB build {build}</h1>")
-    lines.append(f"<p>{len(all_issues)} datasets handed over.</p>")
+    lines.append(f"<p>{len(new)} new datasets handed over:</p>")
     lines.append("<ul>")
     for comp in comp_order:
         comp_issues = components[comp]
         lines.append(f"<li>{len(comp_issues)} {comp}</li>")
     lines.append("</ul>")
 
+    if remaps:
+        lines.append(f"<p>{len(remaps)} genomes remapped:</p>")
+        lines.append("<ul>")
+        for dataset in remaps:
+            line_text = f"{dataset.component} {dataset.organism_abbrev} ({dataset.redmine_link()})"
+            lines.append(f"<li>{line_text}</li>")
+        lines.append("</ul>")
+
+    if others:
+        lines.append(f"<p>{len(others)} other operations:</p>")
+        lines.append("<ul>")
+        for other in others:
+            line_text = f"{other.component} {other.organism_abbrev} ({other.redmine_link()})"
+            lines.append(f"<li>{line_text}</li>")
+        lines.append("</ul>")
+
     lines.append("<h1>New datasets</h1>")
     lines.append("<table>")
     all_issues.sort(key=lambda i: (i.component, i.organism_abbrev, i.dataset_name))
     header = ('Redmine', 'Component', 'Species', 'Dataset', 'Samples')
     lines.append("<tr><th>" + "</th><th>".join(header) + "</th></tr>")
-    for issue in all_issues:
+    for issue in new:
         content = (
             issue.redmine_link(),
             issue.component,
