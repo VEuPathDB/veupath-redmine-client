@@ -151,7 +151,8 @@ def report_genome_issues(genomes, report: str) -> None:
         lines.append(f"<p>{len(others)} other operations:</p>")
         lines.append("<ul>")
         for genome in others:
-            lines.append(f"<li>{genome.organism_abbrev} ({genome.redmine_link()})</li>")
+            operations = ", ".join(genome.operations)
+            lines.append(f"<li>{operations}: {genome.component} {genome.organism_abbrev} ({genome.redmine_link()})</li>")
         lines.append("</ul>")
 
     for comp in comp_order:

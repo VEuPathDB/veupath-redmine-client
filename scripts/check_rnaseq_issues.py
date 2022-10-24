@@ -150,7 +150,8 @@ th {
         lines.append(f"<p>{len(others)} other operations:</p>")
         lines.append("<ul>")
         for other in others:
-            line_text = f"{other.component} {other.organism_abbrev} ({other.redmine_link()})"
+            operations = ", ".join(other.operations)
+            line_text = f"{operations}: {other.component} {other.organism_abbrev} ({other.redmine_link()})"
             lines.append(f"<li>{line_text}</li>")
         lines.append("</ul>")
 
