@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from cmath import exp
 from typing import List
 from .issue_utils import IssueUtils
@@ -37,10 +38,12 @@ class RedmineIssue:
         self.errors = []
         self.custom = IssueUtils.get_custom_fields(self.issue)
         self.component = self._get_component()
+        self.build = self._get_build()
         self.organism_abbrev = self._get_organism_abbrev()
         self.experimental_organism = self._get_experimental_organism()
         self.operations = self._get_operations()
         self.datatype = self._get_datatype()
+        self.team = self._get_team()
     
     def add_error(self, msg: str) -> None:
         self.errors.append(msg)
@@ -60,6 +63,14 @@ class RedmineIssue:
         elif len(components) > 1:
             self.add_error("Several components")
         return component
+
+    def _get_team(self) -> str:
+        try:
+            team = self.custom["VEuPathDB Team"]
+        except KeyError:
+            pass
+
+        return team
     
     def _get_organism_abbrev(self) -> str:
         abbrev = ''
@@ -100,5 +111,14 @@ class RedmineIssue:
     def _get_operations(self) -> List[str]:
         try:
             return self.custom["EBI operations"]
+        except KeyError:
+            return []
+
+    def _get_build(self) -> List[str]:
+        try:
+            version = self.issue.fixed_version
+            match = re.match(r"^Build (\d+)$", str(version))
+            if match:
+                return match.group(1)
         except KeyError:
             return []

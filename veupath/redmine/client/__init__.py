@@ -91,6 +91,15 @@ class RedmineClient:
         search_fields = self.filter.fields
         return list(self.redmine.issue.filter(**search_fields))
 
+    def get_issue(self, issue_id: int):
+        """
+        Get one issue from Redmine
+        """
+
+        issue = self.redmine.issue.get(issue_id)
+        return issue
+
+
     def update_custom_value(self, issue: RedmineIssue, field_name: str, field_value: str) -> bool:
         custom = IssueUtils.get_custom_ids(issue.issue)
         

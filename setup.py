@@ -14,7 +14,8 @@ setup(
     scripts=['scripts/check_genome_issues.py',
              'scripts/check_rnaseq_issues.py',
              'scripts/check_missed_issues.py',
-             'scripts/check_organism_abbrevs.py'
+             'scripts/check_organism_abbrevs.py',
+             'scripts/check_single_issue.py'
              ],
 
     classifiers=[
