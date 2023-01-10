@@ -224,6 +224,8 @@ def store_genome_issues(issues, output_dir) -> None:
                 pass
             
             for genome in genomes:
+                if genome.errors:
+                    continue
                 organism = genome.organism_abbrev
                 organism_file = os.path.join(group_dir, organism + ".json")
                 with open(organism_file, "w") as f:
