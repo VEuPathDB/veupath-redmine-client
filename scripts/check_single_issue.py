@@ -83,6 +83,8 @@ def main():
     redmine = VeupathRedmineClient(key=args.key)
     if args.email:
         Entrez.email = args.email
+    else:
+        print("Tips: provide an email to also check if there is an annotation in INSDC")
     check_genome_issue(redmine, args.id, args.build)
 
 
