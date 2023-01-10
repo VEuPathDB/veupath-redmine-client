@@ -67,6 +67,13 @@ def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]
             else:
                 operations[gff_operation] = [genome]
 
+        if genome.is_replacement:
+            rep_operation = "Replacement"
+            if rep_operation in operations:
+                operations[rep_operation].append(genome)
+            else:
+                operations[rep_operation] = [genome]
+
         for key in genome.operations:
             if genome.gff and key in ("Load from INSDC", "Load from RefSeq"):
                 continue
@@ -217,6 +224,8 @@ def store_genome_issues(issues, output_dir) -> None:
                 pass
             
             for genome in genomes:
+                if genome.errors:
+                    continue
                 organism = genome.organism_abbrev
                 organism_file = os.path.join(group_dir, organism + ".json")
                 with open(organism_file, "w") as f:

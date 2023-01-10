@@ -114,11 +114,12 @@ class RedmineIssue:
         except KeyError:
             return []
 
-    def _get_build(self) -> List[str]:
+    def _get_build(self) -> str:
         try:
             version = self.issue.fixed_version
             match = re.match(r"^Build (\d+)$", str(version))
             if match:
                 return match.group(1)
         except KeyError:
-            return []
+            return ""
+        return ""
