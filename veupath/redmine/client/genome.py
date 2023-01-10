@@ -96,6 +96,7 @@ class Genome(RedmineIssue):
 
         # Next, get the data
         if "Patch build" in self.operations:
+            self.is_replacement = True
             return
         else:
             self.parse_genome()
