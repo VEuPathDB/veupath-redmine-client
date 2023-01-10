@@ -67,6 +67,13 @@ def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]
             else:
                 operations[gff_operation] = [genome]
 
+        if genome.is_replacement:
+            rep_operation = "Replacement"
+            if rep_operation in operations:
+                operations[rep_operation].append(genome)
+            else:
+                operations[rep_operation] = [genome]
+
         for key in genome.operations:
             if genome.gff and key in ("Load from INSDC", "Load from RefSeq"):
                 continue
