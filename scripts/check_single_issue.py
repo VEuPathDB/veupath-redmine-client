@@ -75,10 +75,14 @@ def main():
     # Optional
     parser.add_argument('--build', type=str,
                         help='Restrict to a given build')
+    parser.add_argument('--email', type=str,
+                        help='Set this email to use Entrez and check the INSDC records')
     args = parser.parse_args()
     
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
+    if args.email:
+        Entrez.email = args.email
     check_genome_issue(redmine, args.id, args.build)
 
 
