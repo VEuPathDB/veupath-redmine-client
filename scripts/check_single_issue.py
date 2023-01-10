@@ -53,6 +53,8 @@ def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int)
     if errors:
         print(f"This issue has {len(errors)} errors:")
         [ print(f"- {error}") for error in errors ]
+    else:
+        print("No error found")
 
 
 def check_issue(issue: RedmineIssue, build: str):
