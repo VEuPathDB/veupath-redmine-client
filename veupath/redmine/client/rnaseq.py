@@ -110,9 +110,10 @@ class RNAseq(RedmineIssue):
     def _get_dataset_name(self) -> None:
         name = self.custom["Internal dataset name"]
         if name:
+            name = name.strip()
             self.dataset_name = name
             if re.search(r'[ /]', name):
-                self.add_error(f"Bad chars in dataset name: {name}")
+                self.add_error(f"Bad chars in dataset name: '{name}'")
         else:
             self.add_error("Missing dataset name")
 
