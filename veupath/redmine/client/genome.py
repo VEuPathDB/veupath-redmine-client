@@ -206,6 +206,8 @@ class Genome(RedmineIssue):
         """
         if not self.insdc_metadata:
             return
+        if "Load from EnsEMBL" in self.operations:
+            return
 
         has_gff = False
         if self.gff:
