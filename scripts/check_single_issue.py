@@ -53,6 +53,8 @@ def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int)
     if errors:
         print(f"This issue has {len(errors)} errors:")
         [ print(f"- {error}") for error in errors ]
+    else:
+        print("No error found")
 
 
 def check_issue(issue: RedmineIssue, build: str):
@@ -75,10 +77,16 @@ def main():
     # Optional
     parser.add_argument('--build', type=str,
                         help='Restrict to a given build')
+    parser.add_argument('--email', type=str,
+                        help='Set this email to use Entrez and check the INSDC records')
     args = parser.parse_args()
     
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
+    if args.email:
+        Entrez.email = args.email
+    else:
+        print("Tips: provide an email to also check if there is an annotation in INSDC")
     check_genome_issue(redmine, args.id, args.build)
 
 
