@@ -197,7 +197,7 @@ def store_genome_issues(issues, output_dir) -> None:
         'Load from RefSeq': 'new_genomes',
         'Load from INSDC': 'new_genomes',
         'Allocate stable ids': 'stable_ids',
-        'Load from EnSEMBL': 'copy_ensembl',
+        'Load from EnsEMBL': 'copy_ensembl',
         'Patch build': 'patch_build',
         'Load from GFF': 'load_gff',
         'Other': 'other',
