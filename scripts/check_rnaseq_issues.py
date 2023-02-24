@@ -27,6 +27,16 @@ supported_team = "Data Processing (EBI)"
 supported_status_id = 20
 no_spliced_components = ('TriTrypDB', 'MicrospordiaDB')
 
+valid_status_handover = ('New', 'Data Processing (EBI)')
+valid_status_anytime = (
+    'New',
+    'Data Processing (EBI)',
+    'Ready for Release',
+    'Post Loading Config and QA',
+    'Pre-loading data preparation',
+    'Assessment for Loading',
+    'Outreach QA',
+    )
 
 def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
     """Get issues for all RNA-Seq datasets"""
@@ -210,6 +220,16 @@ def store_issues(issues, output_dir) -> None:
             json.dump(all_datasets_structs, f, indent=True)
 
 
+def filter_valid_status(issues: List, valid_status) -> List:
+    valid_issues = []
+    for issue in issues:
+        if str(issue.status) in valid_status:
+            valid_issues.append(issue)
+        else:
+            print(f"Excluded: {issue} = {issue.id} - {issue.status}")
+    return valid_issues
+
+
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='List RNA-Seq issues from Redmine')
@@ -234,6 +254,8 @@ def main():
                         help='Get all RNA-Seq data for a given species (organism_abbrev)')
     parser.add_argument('--any_team', action='store_true', dest='any_team',
                         help='Do not filter by the processing team')
+    parser.add_argument('--valid_status', action='store_true', dest='valid_status',
+                        help='Filter out invalid status')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -249,6 +271,13 @@ def main():
     if args.species:
         redmine.set_organism(args.species)
     issues = get_rnaseq_issues(redmine)
+
+    if args.valid_status:
+        issues = filter_valid_status(issues, valid_status_anytime)
+        print(f"After valid status filter (anytime valid): {len(issues)}")
+    else:
+        issues = filter_valid_status(issues, valid_status_handover)
+        print(f"After valid status filter (handover valid): {len(issues)}")
 
     if args.list:
         IssueUtils.print_issues(issues, "RNA-Seq datasets")
