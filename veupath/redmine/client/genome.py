@@ -31,6 +31,7 @@ class Genome(RedmineIssue):
         "Gene Models",
     )
     insdc_pattern = r'^GC[AF]_\d{9}(\.\d+)?$'
+    refseq_pattern = r'^GCF_\d{9}(\.\d+)?$'
 
     def __init__(self, issue):
         super().__init__(issue)
@@ -128,6 +129,10 @@ class Genome(RedmineIssue):
         accession = re.sub(r'^.+/([^/]+)/?', r'\1', accession)
 
         if re.match(self.insdc_pattern, accession):
+            if "Load from RefSeq" in self.operations and not re.match(self.refseq_pattern, accession):
+                self.add_error(f"Accession {accession} is not a RefSeq accession")
+            elif "Load from INSDC" in self.operations and re.match(self.refseq_pattern, accession):
+                self.add_error(f"Accession {accession} is a RefSeq accession, not INSDC")
             return accession
         else:
             return ""
