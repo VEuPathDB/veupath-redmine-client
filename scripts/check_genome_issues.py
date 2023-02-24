@@ -201,6 +201,7 @@ def store_genome_issues(issues, output_dir) -> None:
         'Patch build': 'patch_build',
         'Load from GFF': 'load_gff',
         'Other': 'other',
+        'Replacement': 'replacement',
     }
     no_extraction = (
         'valid',
