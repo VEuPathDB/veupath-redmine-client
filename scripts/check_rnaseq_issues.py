@@ -25,7 +25,7 @@ from veupath.redmine.client.rnaseq import RNAseq
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
-no_spliced_components = ('TriTrypDB')
+no_spliced_components = ('TriTrypDB', 'MicrospordiaDB')
 
 
 def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
