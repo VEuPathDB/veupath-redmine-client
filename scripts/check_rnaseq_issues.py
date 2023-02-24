@@ -168,7 +168,7 @@ th {
     lines.append("<h1>New datasets</h1>")
     lines.append("<table>")
     new.sort(key=lambda i: (i.component, i.organism_abbrev, i.dataset_name))
-    header = ('Redmine', 'Component', 'Species', 'Dataset', 'Samples')
+    header = ('Redmine', 'Component', 'Species', 'Dataset', 'Samples', 'Notes')
     lines.append("<tr><th>" + "</th><th>".join(header) + "</th></tr>")
     for issue in new:
         content = (
@@ -176,7 +176,8 @@ th {
             issue.component,
             issue.organism_abbrev,
             issue.dataset_name,
-            str(len(issue.samples))
+            str(len(issue.samples)),
+            ""
         )
         lines.append("<tr><td>" + "</td><td>".join(content) + "</td></tr>")
     lines.append("</table>")
