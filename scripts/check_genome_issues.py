@@ -217,7 +217,7 @@ def store_genome_issues(issues, output_dir) -> None:
             if group in group_names:
                 group_name = group_names[group]
             else:
-                group_name = 'other'
+                group_name = group.replace(' ', '_')
             group_dir = os.path.join(output_dir, group_name)
             try:
                 os.makedirs(group_dir)
