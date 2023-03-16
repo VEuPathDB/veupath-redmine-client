@@ -48,43 +48,69 @@ def categorize_abbrevs(issues: List[RedmineIssue],
 
     cur_abbrevs = OrgsUtils.load_abbrevs(cur_abbrevs_path)
     category: Dict[str, List[Genome]] = {
-        "new": [],
-        "valid": [],
+        "set_new": [],
+        "set_replacement": [],
+        "to_update": [],
         "invalid": [],
-        "exists_replace": [],
-        "exists_noreplace": [],
-        "new_exists_replace": [],
-        "new_exists_noreplace": [],
+        "duplicate": [],
+        "used_abbrev": [],
+        "unknown_replacement": [],
     }
 
+    previous_names = set()
     for issue in issues:
         genome = Genome(issue)
         genome.parse()
+        new_abbrev = False
+        valid_abbrev = False
+        used_abbrev = False
+        duplicate = False
+
+        # Create new organism abbrev if necessary
         if not genome.organism_abbrev:
             exp_organism = genome.experimental_organism
             new_org = OrgsUtils.generate_abbrev(exp_organism)
             genome.organism_abbrev = new_org
-            if new_org.lower() in cur_abbrevs:
-                if genome.is_replacement:
-                    category["new_exists_replace"].append(genome)
-                else:
-                    category["new_exists_noreplace"].append(genome)
-            else:
-                category["new"].append(genome)
-                cur_abbrevs.update([new_org])
+            new_abbrev = True
+        
+        # Check that the format of the abbrev is valid
+        try:
+            OrgsUtils.validate_abbrev(genome.organism_abbrev)
+            valid_abbrev = True
+        except InvalidAbbrev:
+            valid_abbrev = False
+        
+        # Check if the abbrev is already in use
+        if genome.organism_abbrev.lower() in cur_abbrevs:
+            used_abbrev = True
+
+        if genome.organism_abbrev in previous_names:
+            duplicate = True
         else:
-            if genome.organism_abbrev.lower() in cur_abbrevs:
+            previous_names.update([genome.organism_abbrev])
+        
+        # Categorize
+        if not valid_abbrev:
+            category["invalid"].append(genome)
+        elif duplicate:
+            category["duplicate"].append(genome)
+        else:
+            if used_abbrev:
                 if genome.is_replacement:
-                    category["exists_replace"].append(genome)
+                    if new_abbrev:
+                        category["to_update"].append(genome)
+                    else:
+                        category["set_replacement"].append(genome)
                 else:
-                    category["exists_noreplace"].append(genome)
+                    category["used_abbrev"].append(genome)
             else:
-                cur_abbrevs.update([genome.organism_abbrev])
-                try:
-                    OrgsUtils.validate_abbrev(genome.organism_abbrev)
-                    category["valid"].append(genome)
-                except InvalidAbbrev:
-                    category["invalid"].append(genome)
+                if genome.is_replacement:
+                    category["unknown_replacement"].append(genome)
+                else:
+                    if new_abbrev:
+                        category["to_update"].append(genome)
+                    else:
+                        category["set_new"].append(genome)
     
     return category
 
@@ -93,13 +119,13 @@ def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
 
     for cat in (
-        'invalid',
-        'new_exists_replace',
-        'new_exists_noreplace',
-        'exists_noreplace',
-        'new',
-        'exists_replace',
-        'valid',
+        "invalid",
+        "duplicate",
+        "used_abbrev",
+        "unknown_replacement",
+        "set_new",
+        "set_replacement",
+        "to_update",
     ):
         cat_genomes = categories[cat]
         if len(cat_genomes) == 0:
@@ -112,9 +138,9 @@ def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
             print("\t".join(line))
 
 
-def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue]) -> None:
-    categories = categorize_abbrevs(issues)
-    to_name = categories['new']
+def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
+    categories = categorize_abbrevs(issues, cur_abbrevs_path)
+    to_name = categories['to_update']
     print(f"\n{len(to_name)} new organism abbrevs to update:")
     for genome in to_name:
         new_org = genome.organism_abbrev
@@ -182,7 +208,7 @@ def main():
         if args.check:
             check_abbrevs(issues, args.current_abbrevs)
         elif args.update:
-            update_abbrevs(redmine, issues)
+            update_abbrevs(redmine, issues, args.current_abbrevs)
 
 
 if __name__ == "__main__":
