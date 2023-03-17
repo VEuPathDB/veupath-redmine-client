@@ -71,20 +71,45 @@ class Genome(RedmineIssue):
         return line
     
     def short_str(self) -> str:
-        desc = "; ".join(self.errors) if self.errors else "VALID"
+        # status
+        if self.errors:
+            status = "BAD"
+        else:
+            status = "ok"
+
+        # Create description
         issue = self.issue
         operations = self.operations
         gff = " +GFF" if self.gff else ""
-        stable_ids = " +STABLE_IDS" if "Allocate stable ids" in self.operations else ""
         replace = " +REPLACE" if self.is_replacement else ""
         ops = ",".join(operations)
-        desc = f"{desc}\t({ops}{gff}{stable_ids}{replace})"
-        subject = issue.subject
+        desc = f"{ops}{gff}{replace}"
+
+        # Organism abbrev
         if self.organism_abbrev:
-            subject = f"{self.organism_abbrev:20}  {subject}"
-        if len(subject) > 80:
-            subject = subject[0:80] + '...'
-        return f"  {desc:64}  {issue.id:8} {subject}"
+            organism_str = self.organism_abbrev
+        else:
+            organism_str = "no organism_abbrev"
+
+        # Component
+        if self.component:
+            component_str = self.component
+            if len(component_str) > 12:
+                component_str = component_str[0:12]
+        else:
+            component_str = "no component"
+        
+        # Subject
+        subject = issue.subject
+        if len(subject) > 64:
+            subject = subject[0:64] + '...'
+        
+        # Merge all
+        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}    {desc:64}    {subject}"
+        errors = "\n".join([(" " * 13) + f"ERROR: {error}" for error in self.errors])
+        if errors:
+            line = f"{line}\n{errors}"
+        return line
     
     def parse(self) -> None:
         """
@@ -175,7 +200,7 @@ class Genome(RedmineIssue):
         if Entrez.email and self.accession:
             handle = Entrez.esearch(db="assembly", term=self.accession, retmax='5')
             try:
-                record = Entrez.read(handle)
+                record = Entrez.read(handle, validate=False)
             except ValidationError:
                 self.errors("Validation error")
                 return summary
@@ -194,7 +219,7 @@ class Genome(RedmineIssue):
 
     def get_assembly_metadata(self, id):
         esummary_handle = Entrez.esummary(db="assembly", id=id, report="full")
-        esummary_record = Entrez.read(esummary_handle)
+        esummary_record = Entrez.read(esummary_handle, validate=False)
         return esummary_record
 
     def assembly_is_annotated(self) -> bool:
