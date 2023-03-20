@@ -78,7 +78,6 @@ class Genome(RedmineIssue):
             status = "ok"
 
         # Create description
-        issue = self.issue
         operations = self.operations
         gff = " +GFF" if self.gff else ""
         replace = " +REPLACE" if self.is_replacement else ""
@@ -100,6 +99,7 @@ class Genome(RedmineIssue):
             component_str = "no component"
         
         # Subject
+        issue = self.issue
         subject = issue.subject
         if len(subject) > 64:
             subject = subject[0:64] + '...'

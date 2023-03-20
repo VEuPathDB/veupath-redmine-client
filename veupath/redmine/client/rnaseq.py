@@ -72,16 +72,44 @@ class RNAseq(RedmineIssue):
         return line
     
     def short_str(self) -> str:
-        org = self.organism_abbrev
-        desc = "; ".join(self.errors) if self.errors else "VALID"
-        if self.is_ref_change:
-            desc += f" (Reference change)"
+        # status
+        if self.errors:
+            status = "BAD"
+        else:
+            status = "ok"
+
+        # Create description
+        operations = self.operations
+        ref_change = " Reference change" if self.is_ref_change else ""
+        ops = ",".join(operations)
+        desc = f"{ops}{ref_change}"
+
+        # Organism abbrev
+        if self.organism_abbrev:
+            organism_str = self.organism_abbrev
+        else:
+            organism_str = "no organism_abbrev"
+
+        # Component
+        if self.component:
+            component_str = self.component
+            if len(component_str) > 12:
+                component_str = component_str[0:12]
+        else:
+            component_str = "no component"
+
+        # Subject
         issue = self.issue
-        
         subject = issue.subject
-        if len(subject) > 80:
-            subject = subject[0:80] + '...'
-        return f"  {org}\t{desc:50}\t{issue.id:8}  {subject}"
+        if len(subject) > 64:
+            subject = subject[0:64] + '...'
+
+        # Merge all
+        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}    {desc:40}    {subject}"
+        errors = "\n".join([(" " * 13) + f"ERROR: {error}" for error in self.errors])
+        if errors:
+            line = f"{line}\n{errors}"
+        return line
     
     def parse(self) -> None:
         """

@@ -88,7 +88,7 @@ def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
 def check_issues(issues) -> None:
     categories = categorize_issues(issues)
     for key in categories:
-        print(f"{len(categories[key])} {key}:")
+        print(f"\n{len(categories[key])} {key}:")
         genomes = categories[key]
         for genome in genomes:
             print(genome.short_str())
