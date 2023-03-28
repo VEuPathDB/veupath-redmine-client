@@ -18,10 +18,12 @@
 import os
 import json
 import argparse
+from pathlib import Path
 from typing import Dict, List
+
 from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.issue_utils import IssueUtils
 from veupath.redmine.client.rnaseq import RNAseq
+from veupath.redmine.client.orgs_utils import OrgsUtils
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
@@ -38,7 +40,7 @@ valid_status_anytime = (
     'Outreach QA',
     )
 
-def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
+def get_rnaseq_issues(redmine: VeupathRedmineClient) -> List[RNAseq]:
     """Get issues for all RNA-Seq datasets"""
 
     datasets = []
@@ -46,29 +48,31 @@ def get_rnaseq_issues(redmine: VeupathRedmineClient) -> list:
         redmine.add_filter("datatype", datatype)
         issues = redmine.get_issues()
         print(f"{len(issues)} issues for datatype '{datatype}'")
-        datasets += issues
+        for issue in issues:
+            dataset = RNAseq(issue)
+            dataset.parse()
+            datasets.append(dataset)
         redmine.remove_filter("datatype")
     print(f"{len(datasets)} issues for RNA-Seq")
     
     return datasets
 
 
-def add_no_spliced(issue: RNAseq) -> None:
-    if issue.component in no_spliced_components:
-        issue.no_spliced = True
+def add_no_spliced(dataset: RNAseq) -> None:
+    if dataset.component in no_spliced_components:
+        dataset.no_spliced = True
 
 
-def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
+def categorize_datasets(datasets: List[RNAseq]) -> Dict[str, List[RNAseq]]:
     validity: Dict[str, List[RNAseq]] = {
         'valid': [],
         'invalid': [],
         'reference_change': [],
         'new': [],
+        'new_genome': [],
         'other': [],
     }
-    for issue in issues:
-        dataset = RNAseq(issue)
-        dataset.parse()
+    for dataset in datasets:
 
         if dataset.errors:
             validity['invalid'].append(dataset)
@@ -77,6 +81,8 @@ def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
                 validity['reference_change'].append(dataset)
             elif "Other" in dataset.operations:
                 validity['other'].append(dataset)
+            elif dataset.new_genome:
+                validity['new_genome'].append(dataset)
             else:
                 validity['new'].append(dataset)
             validity['valid'].append(dataset)
@@ -85,8 +91,8 @@ def categorize_issues(issues) -> Dict[str, List[RNAseq]]:
     return categories
 
 
-def check_issues(issues) -> None:
-    categories = categorize_issues(issues)
+def check_datasets(datasets) -> None:
+    categories = categorize_datasets(datasets)
     for key in categories:
         print(f"{len(categories[key])} {key}:")
         genomes = categories[key]
@@ -94,28 +100,30 @@ def check_issues(issues) -> None:
             print(genome.short_str())
 
 
-def report_issues(issues, report: str) -> None:
-    categories = categorize_issues(issues)
-    all_issues: List[RNAseq] = categories['valid']
-    if not all_issues:
-        print("No valid issue to report")
+def report_issues(datasets: List[RNAseq], report: str) -> None:
+    categories = categorize_datasets(datasets)
+    all_datasets: List[RNAseq] = categories['valid']
+    if not all_datasets:
+        print("No valid dataset to report")
         return
 
     new: List[RNAseq] = categories['new']
+    new_genome: List[RNAseq] = categories['new_genome']
+    new += new_genome
     remaps: List[RNAseq] = categories['reference_change']
     others: List[RNAseq] = categories['other']
 
     build = 0
     components = {}
-    for issue in new:
-        version = str(issue.issue.fixed_version)
+    for dataset in new:
+        version = str(dataset.issue.fixed_version)
         build = int(version[-2:])
-        comp = issue.component
+        comp = dataset.component
         
         if comp not in components:
-            components[comp] = [issue]
+            components[comp] = [dataset]
         else:
-            components[comp].append(issue)
+            components[comp].append(dataset)
     comp_order = list(components.keys())
     comp_order.sort()
 
@@ -170,13 +178,13 @@ th {
     new.sort(key=lambda i: (i.component, i.organism_abbrev, i.dataset_name))
     header = ('Redmine', 'Component', 'Species', 'Dataset', 'Samples', 'Notes')
     lines.append("<tr><th>" + "</th><th>".join(header) + "</th></tr>")
-    for issue in new:
+    for dataset in new:
         content = (
-            issue.redmine_link(),
-            issue.component,
-            issue.organism_abbrev,
-            issue.dataset_name,
-            str(len(issue.samples)),
+            dataset.redmine_link(),
+            dataset.component,
+            dataset.organism_abbrev,
+            dataset.dataset_name,
+            str(len(dataset.samples)),
             ""
         )
         lines.append("<tr><td>" + "</td><td>".join(content) + "</td></tr>")
@@ -186,49 +194,72 @@ th {
         report_fh.write("\n".join(lines))
 
 
-def store_issues(issues, output_dir) -> None:
+def store_issues(issues, output_dir: Path) -> None:
 
-    categories = categorize_issues(issues)
-    all_issues: List[RNAseq] = categories['valid']
-    if not all_issues:
-        print("No valid issue to report")
+    categories = categorize_datasets(issues)
+    all_datasets: List[RNAseq] = categories['valid']
+    if not all_datasets:
+        print("No valid dataset to report")
         return
     else:
-        all_datasets_structs = []
-        for dataset in all_issues:
+        cur_datasets_structs = []
+        new_datasets_structs = []
+        for dataset in all_datasets:
             if dataset.is_ref_change:
                 continue
             elif "Other" in dataset.operations:
                 continue
+            sub_dir = "cur_genome"
+            if dataset.new_genome:
+                print(f"Dataset is for new genome {dataset.issue.id}")
+                sub_dir = "new_genome"
 
             add_no_spliced(dataset)
             component = dataset.component
-            comp_dir = os.path.join(output_dir, component)
+            comp_dir = Path(output_dir) / sub_dir / component
             try:
-                os.makedirs(comp_dir)
+                comp_dir.mkdir(parents=True)
             except FileExistsError:
                 pass
         
             dataset_name = f"{dataset.organism_abbrev}_{dataset.dataset_name}"
-            organism_file = os.path.join(comp_dir, dataset_name + ".json")
-            with open(organism_file, "w") as f:
+            organism_file = comp_dir / f"{dataset_name}.json"
+            with organism_file.open("w") as f:
                 dataset_struct = dataset.to_json_struct()
-                all_datasets_structs.append(dataset_struct)
-                json.dump([dataset_struct], f, indent=True)
+                if dataset.new_genome:
+                    new_datasets_structs.append(dataset_struct)
+                else:
+                    cur_datasets_structs.append(dataset_struct)
+                json.dump([dataset_struct], f, indent=True, sort_keys=True)
 
-        all_structs_file = os.path.join(output_dir, 'all.json')
-        with open(all_structs_file, "w") as f:
-            json.dump(all_datasets_structs, f, indent=True)
+        cur_structs_file = output_dir / 'all_cur.json'
+        with cur_structs_file.open("w") as f:
+            json.dump(cur_datasets_structs, f, indent=True, sort_keys=True)
+
+        if new_datasets_structs:
+            new_structs_file = output_dir / 'all_new.json'
+            with new_structs_file.open("w") as f:
+                json.dump(new_datasets_structs, f, indent=True, sort_keys=True)
 
 
-def filter_valid_status(issues: List, valid_status) -> List:
-    valid_issues = []
-    for issue in issues:
-        if str(issue.status) in valid_status:
-            valid_issues.append(issue)
+def filter_valid_status(datasets: List[RNAseq], valid_status) -> List:
+    valid_datasets = []
+    for dataset in datasets:
+        if str(dataset.issue.status) in valid_status:
+            valid_datasets.append(dataset)
         else:
-            print(f"Excluded: {issue} = {issue.id} - {issue.status}")
-    return valid_issues
+            print(f"Excluded: {dataset} = {dataset.issue.id} - {dataset.issue.status}")
+    return valid_datasets
+
+
+def add_abbrev_flag(datasets: List[RNAseq], abbrev_file: Path) -> List:
+    cur_abbrevs = OrgsUtils.load_abbrevs(abbrev_file)
+
+    for dataset in datasets:
+        if dataset.organism_abbrev.lower() not in cur_abbrevs:
+            dataset.new_genome = True
+
+    return datasets
 
 
 def main():
@@ -238,8 +269,6 @@ def main():
     parser.add_argument('--key', type=str, required=True,
                         help='Redmine authentification key')
     
-    parser.add_argument('--list', action='store_true', dest='list',
-                        help='Just list all issues')
     parser.add_argument('--check', action='store_true', dest='check',
                         help='Parse issues and report errors')
     parser.add_argument('--report', type=str,
@@ -257,6 +286,8 @@ def main():
                         help='Do not filter by the processing team')
     parser.add_argument('--valid_status', action='store_true', dest='valid_status',
                         help='Filter out invalid status')
+    parser.add_argument('--current_abbbrevs', type=str, dest='current_abbrevs',
+                        help='A file that contains current abbrevs (otherwise dataset is for a new genome)')
     args = parser.parse_args()
     
     # Start Redmine API
@@ -271,23 +302,28 @@ def main():
 
     if args.species:
         redmine.set_organism(args.species)
-    issues = get_rnaseq_issues(redmine)
+    datasets = get_rnaseq_issues(redmine)
+    
+    if args.current_abbrevs:
+        datasets = add_abbrev_flag(datasets, Path(args.current_abbrevs))
+    
+    for dat in datasets:
+        if dat.new_genome:
+            print(f"New genome for {dat}")
 
     if args.valid_status:
-        issues = filter_valid_status(issues, valid_status_anytime)
-        print(f"After valid status filter (anytime valid): {len(issues)}")
+        datasets = filter_valid_status(datasets, valid_status_anytime)
+        print(f"After valid status filter (anytime valid): {len(datasets)}")
     else:
-        issues = filter_valid_status(issues, valid_status_handover)
-        print(f"After valid status filter (handover valid): {len(issues)}")
+        datasets = filter_valid_status(datasets, valid_status_handover)
+        print(f"After valid status filter (handover valid): {len(datasets)}")
 
-    if args.list:
-        IssueUtils.print_issues(issues, "RNA-Seq datasets")
-    elif args.check:
-        check_issues(issues)
+    if args.check:
+        check_datasets(datasets)
     elif args.report:
-        report_issues(issues, args.report)
+        report_issues(datasets, args.report)
     elif args.store:
-        store_issues(issues, args.store)
+        store_issues(datasets, Path(args.store))
 
 
 if __name__ == "__main__":
