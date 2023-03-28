@@ -40,6 +40,7 @@ class RNAseq(RedmineIssue):
         self.is_ref_change = False
         if "Reference change" in self.operations:
             self.is_ref_change = True
+        self.new_genome = False
     
     def to_json_struct(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {
