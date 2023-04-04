@@ -21,6 +21,9 @@ from .issue_utils import IssueUtils
 from .redmine_issue import RedmineIssue, DatatypeException
 
 
+NON_ASCII = r"[^A-Za-z0-9_.-]"
+
+
 class SamplesParsingException(Exception):
     pass
 
@@ -155,7 +158,7 @@ class RNAseq(RedmineIssue):
         if name:
             name = name.strip()
             self.dataset_name = name
-            if re.search(r'[ /]', name):
+            if re.search(NON_ASCII, name):
                 self.add_error(f"Bad chars in dataset name: '{name}'")
         else:
             self.add_error("Missing dataset name")
@@ -292,7 +295,7 @@ class RNAseq(RedmineIssue):
         name = re.sub(r"\*", "_star_", name)
         name = re.sub(r"%", "pc_", name)
         name = re.sub(r"_+", "_", name)
-        if re.search(r"[^A-Za-z0-9_.-]", name):
+        if re.search(NON_ASCII, name):
             print("WARNING: name contains special characters: %s (%s)" % (old_name, name))
             name = ""
         
