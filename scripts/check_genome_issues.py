@@ -96,7 +96,7 @@ def summarize_genome_issues(genomes) -> None:
 def check_genome_issues(genomes) -> None:
     categories = categorize_genome_issues(genomes)
     for key in categories:
-        print(f"{len(categories[key])} {key}:")
+        print(f"\n{len(categories[key])} {key}:")
         genomes = categories[key]
         for genome in genomes:
             print(genome.short_str())

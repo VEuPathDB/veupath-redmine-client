@@ -94,7 +94,7 @@ def categorize_datasets(datasets: List[RNAseq]) -> Dict[str, List[RNAseq]]:
 def check_datasets(datasets) -> None:
     categories = categorize_datasets(datasets)
     for key in categories:
-        print(f"{len(categories[key])} {key}:")
+        print(f"\n{len(categories[key])} {key}:")
         genomes = categories[key]
         for genome in genomes:
             print(genome.short_str())
