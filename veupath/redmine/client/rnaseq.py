@@ -41,6 +41,12 @@ class RNAseq(RedmineIssue):
         if "Reference change" in self.operations:
             self.is_ref_change = True
         self.new_genome = False
+        
+        valid_operations = {"Other", "Reference change"}
+        operations = self.operations.copy()
+        for operation in operations:
+            if operation not in valid_operations:
+                self.operations.remove(operation)
     
     def to_json_struct(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {
@@ -69,7 +75,7 @@ class RNAseq(RedmineIssue):
         else:
             line = line + ' (valid issue)'
         if self.is_ref_change:
-            line += f" (Reference change)" 
+            line += " (Reference change)"
         return line
     
     def short_str(self) -> str:
@@ -81,9 +87,7 @@ class RNAseq(RedmineIssue):
 
         # Create description
         operations = self.operations
-        ref_change = " Reference change" if self.is_ref_change else ""
-        ops = ",".join(operations)
-        desc = f"{ops}{ref_change}"
+        desc = ",".join(operations)
 
         # Organism abbrev
         if self.organism_abbrev:
@@ -95,18 +99,26 @@ class RNAseq(RedmineIssue):
         if self.component:
             component_str = self.component
             if len(component_str) > 12:
-                component_str = component_str[0:12]
+                component_str = component_str[0:9] + "..."
         else:
             component_str = "no component"
+        
+        # Dataset
+        if self.dataset_name:
+            dataset_str = self.dataset_name
+            if len(dataset_str) > 64:
+                dataset_str = dataset_str[0:64] + "..."
+        else:
+            dataset_str = "no dataset_name"
 
         # Subject
         issue = self.issue
         subject = issue.subject
-        if len(subject) > 64:
-            subject = subject[0:64] + '...'
+        if len(subject) > 40:
+            subject = subject[0:37] + '...'
 
         # Merge all
-        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}    {desc:40}    {subject}"
+        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}  {dataset_str:64}  {desc:22}  {subject}"
         errors = "\n".join([(" " * 13) + f"ERROR: {error}" for error in self.errors])
         if errors:
             line = f"{line}\n{errors}"
