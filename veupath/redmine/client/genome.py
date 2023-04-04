@@ -131,9 +131,10 @@ class Genome(RedmineIssue):
         """
         Extract genome metadata from a Redmine issue
         """
-        self._get_insdc_accession()
-        self._get_gff()
         self._get_replacement()
+        self._get_gff()
+
+        self._get_insdc_accession()
         self._get_insdc_metadata()
         self._check_datatype()
     
@@ -163,6 +164,10 @@ class Genome(RedmineIssue):
             return ""
     
     def _get_insdc_accession(self) -> None:
+        exclude_operations = {"Load from INSDC", "Load from RefSeq", "Load from EnsEMBL"}
+        if not exclude_operations.intersection(self.operations) and self.is_replacement:
+            return
+
         accession = self.custom["GCA number"]
         if not accession:
             self.add_error("INSDC accession missing")
