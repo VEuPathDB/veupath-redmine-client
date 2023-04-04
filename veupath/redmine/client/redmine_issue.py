@@ -41,7 +41,7 @@ class RedmineIssue:
         self.build = self._get_build()
         self.organism_abbrev = self._get_organism_abbrev()
         self.experimental_organism = self._get_experimental_organism()
-        self.operations = self._get_operations()
+        self.operations = set(self._get_operations())
         self.datatype = self._get_datatype()
         self.team = self._get_team()
     
