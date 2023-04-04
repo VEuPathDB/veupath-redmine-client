@@ -86,8 +86,10 @@ class RNAseq(RedmineIssue):
             status = "ok"
 
         # Create description
-        operations = self.operations
-        desc = ",".join(operations)
+        descriptions = self.operations.copy()
+        if self.new_genome:
+            descriptions.add("New genome")
+        desc = ",".join(descriptions)
 
         # Organism abbrev
         if self.organism_abbrev:
@@ -109,7 +111,7 @@ class RNAseq(RedmineIssue):
             if len(dataset_str) > 64:
                 dataset_str = dataset_str[0:64] + "..."
         else:
-            dataset_str = "no dataset_name"
+            dataset_str = "NO dataset_name"
 
         # Subject
         issue = self.issue
