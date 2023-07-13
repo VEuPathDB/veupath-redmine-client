@@ -24,13 +24,10 @@ from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
 
 supported_team = "Data Processing (EBI)"
-supported_status_id = 20
 
 
 def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     """Get issues for all genomes"""
-
-    redmine.add_filter("team", supported_team)
 
     genomes = []
     for datatype in Genome.supported_datatypes:
@@ -268,6 +265,8 @@ def main():
     
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
+    if not args.any_team:
+        redmine.add_filter("team", supported_team)
     if args.build:
         redmine.set_build(args.build)
     if args.component:
