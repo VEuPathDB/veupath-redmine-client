@@ -36,6 +36,7 @@ class RedmineIssue:
     def __init__(self, issue):
         self.issue = issue
         self.errors = []
+        self.warnings = []
         self.custom = IssueUtils.get_custom_fields(self.issue)
         self.component = self._get_component()
         self.build = self._get_build()
@@ -47,6 +48,9 @@ class RedmineIssue:
     
     def add_error(self, msg: str) -> None:
         self.errors.append(msg)
+    
+    def add_warning(self, msg: str) -> None:
+        self.warnings.append(msg)
 
     def _get_component(self) -> str:
         components = []

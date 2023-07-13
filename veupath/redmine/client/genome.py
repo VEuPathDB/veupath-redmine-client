@@ -137,6 +137,19 @@ class Genome(RedmineIssue):
         self._get_insdc_accession()
         self._get_insdc_metadata()
         self._check_datatype()
+        self._check_latest()
+
+    def _check_latest(self) -> None:
+        summary = self.insdc_metadata
+
+        latest_accession = summary.get("LatestAccession")
+        if latest_accession and latest_accession != self.accession:
+            self.add_warning(f"Not the latest accession: {self.accession} -> {latest_accession}")
+        
+        anomalous = summary.get("AnomalousList")
+        if anomalous:
+            for anomaly in anomalous:
+                self.add_warning(f"Anomaly: {anomaly['Property']}")
     
     def _check_accession(self, accession: str) -> str:
         """
