@@ -54,11 +54,17 @@ def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]
         'invalid': [],
     }
     operations: Dict[str, List[Genome]] = {}
+    warnings: Dict[str, List[Genome]] = {
+        'with warnings': [],
+    }
     for genome in genomes:
         if genome.errors:
             validity['invalid'].append(genome)
         else:
             validity['valid'].append(genome)
+        
+        if genome.warnings:
+            warnings['with warnings'].append(genome)
         
         if genome.gff:
             gff_operation = "Load from GFF"
@@ -83,7 +89,7 @@ def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]
             else:
                 operations[key] = [genome]
     
-    categories = {**validity, **operations}
+    categories = {**warnings, **validity, **operations}
     return categories
 
 

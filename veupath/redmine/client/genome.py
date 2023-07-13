@@ -105,10 +105,13 @@ class Genome(RedmineIssue):
             subject = subject[0:64] + '...'
         
         # Merge all
-        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}    {desc:64}    {subject}"
+        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}    {desc:32}    {subject}"
         errors = "\n".join([(" " * 13) + f"ERROR: {error}" for error in self.errors])
+        warnings = "\n".join([(" " * 13) + f"WARNING: {warning}" for warning in self.warnings])
         if errors:
             line = f"{line}\n{errors}"
+        if warnings:
+            line = f"{line}\n{warnings}"
         return line
     
     def parse(self) -> None:
