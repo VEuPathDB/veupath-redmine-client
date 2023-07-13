@@ -111,10 +111,10 @@ class RNAseq(RedmineIssue):
         # Dataset
         if self.dataset_name:
             dataset_str = self.dataset_name
-            if len(dataset_str) > 64:
-                dataset_str = dataset_str[0:64] + "..."
+            if len(dataset_str) > 24:
+                dataset_str = dataset_str[0:24] + "..."
         else:
-            dataset_str = "NO dataset_name"
+            dataset_str = "no dataset_name"
 
         # Subject
         issue = self.issue
@@ -123,7 +123,7 @@ class RNAseq(RedmineIssue):
             subject = subject[0:37] + '...'
 
         # Merge all
-        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}  {dataset_str:64}  {desc:22}  {subject}"
+        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}  {dataset_str:24}  {desc:22}  {subject}"
         errors = "\n".join([(" " * 13) + f"ERROR: {error}" for error in self.errors])
         if errors:
             line = f"{line}\n{errors}"
@@ -145,7 +145,8 @@ class RNAseq(RedmineIssue):
         """
         Extract RNA-Seq metadata from a Redmine issue
         """
-        if self.is_ref_change:
+        if self.is_ref_change or "Other" in self.operations:
+            self.dataset_name = "(dataset_name ignored)"
             pass
         else:
             self._get_dataset_name()

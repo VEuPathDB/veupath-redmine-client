@@ -105,10 +105,13 @@ class Genome(RedmineIssue):
             subject = subject[0:64] + '...'
         
         # Merge all
-        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}    {desc:64}    {subject}"
+        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}    {desc:32}    {subject}"
         errors = "\n".join([(" " * 13) + f"ERROR: {error}" for error in self.errors])
+        warnings = "\n".join([(" " * 13) + f"WARNING: {warning}" for warning in self.warnings])
         if errors:
             line = f"{line}\n{errors}"
+        if warnings:
+            line = f"{line}\n{warnings}"
         return line
     
     def parse(self) -> None:
@@ -137,6 +140,19 @@ class Genome(RedmineIssue):
         self._get_insdc_accession()
         self._get_insdc_metadata()
         self._check_datatype()
+        self._check_latest()
+
+    def _check_latest(self) -> None:
+        summary = self.insdc_metadata
+
+        latest_accession = summary.get("LatestAccession")
+        if latest_accession and latest_accession != self.accession:
+            self.add_warning(f"Not the latest accession: {self.accession} -> {latest_accession}")
+        
+        anomalous = summary.get("AnomalousList")
+        if anomalous:
+            for anomaly in anomalous:
+                self.add_warning(f"Anomaly: {anomaly['Property']}")
     
     def _check_accession(self, accession: str) -> str:
         """
