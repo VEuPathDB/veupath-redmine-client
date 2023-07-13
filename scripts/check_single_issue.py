@@ -50,10 +50,14 @@ def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int)
         print(f"Unsupported datatype {datatype} for issue {issue_id}")
     
     errors = redmine_issue.errors
+    warnings = redmine_issue.warnings
     if errors:
         print(f"This issue has {len(errors)} errors:")
         [ print(f"- {error}") for error in errors ]
-    else:
+    if warnings:
+        print(f"This issue has {len(warnings)} warnings:")
+        [ print(f"- {warning}") for warning in warnings ]
+    if not (errors or warnings):
         print("No error found")
 
 
