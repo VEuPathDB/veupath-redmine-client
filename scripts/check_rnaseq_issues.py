@@ -68,6 +68,7 @@ def categorize_datasets(datasets: List[RNAseq]) -> Dict[str, List[RNAseq]]:
         'valid': [],
         'invalid': [],
         'reference_change': [],
+        'patch_build': [],
         'new': [],
         'new_genome': [],
         'other': [],
@@ -79,6 +80,8 @@ def categorize_datasets(datasets: List[RNAseq]) -> Dict[str, List[RNAseq]]:
         else:
             if dataset.is_ref_change:
                 validity['reference_change'].append(dataset)
+            elif "Patch build" in dataset.operations:
+                validity['patch_build'].append(dataset)
             elif "Other" in dataset.operations:
                 validity['other'].append(dataset)
             elif dataset.new_genome:
@@ -208,9 +211,11 @@ def store_issues(issues, output_dir: Path) -> None:
             sub_dir = "cur_genome"
             if dataset.is_ref_change:
                 continue
-            if "Other" in dataset.operations:
+            elif "Other" in dataset.operations:
                 sub_dir = "other"
-            if dataset.new_genome:
+            elif "Patch build" in dataset.operations:
+                sub_dir = "patch_build"
+            elif dataset.new_genome:
                 print(f"Dataset is for new genome {dataset.issue.id}")
                 sub_dir = "new_genome"
 
@@ -228,7 +233,7 @@ def store_issues(issues, output_dir: Path) -> None:
                 dataset_struct = dataset.to_json_struct()
                 if dataset.new_genome:
                     new_datasets_structs.append(dataset_struct)
-                else:
+                elif "Other" not in dataset.operations and "Patch build" not in dataset.operations:
                     cur_datasets_structs.append(dataset_struct)
                 json.dump([dataset_struct], f, indent=True, sort_keys=True)
 
