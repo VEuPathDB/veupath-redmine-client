@@ -209,12 +209,10 @@ def store_issues(issues, output_dir: Path) -> None:
         new_datasets_structs = []
         for dataset in all_datasets:
             sub_dir = "cur_genome"
-            if dataset.is_ref_change:
+            if dataset.is_ref_change or "Patch build" in dataset.operations:
                 continue
             elif "Other" in dataset.operations:
                 sub_dir = "other"
-            elif "Patch build" in dataset.operations:
-                sub_dir = "patch_build"
             elif dataset.new_genome:
                 print(f"Dataset is for new genome {dataset.issue.id}")
                 sub_dir = "new_genome"
