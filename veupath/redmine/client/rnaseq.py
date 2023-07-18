@@ -146,11 +146,10 @@ class RNAseq(RedmineIssue):
         Extract RNA-Seq metadata from a Redmine issue
         """
         if self.is_ref_change or "Other" in self.operations or "Patch build" in self.operations:
-            self.dataset_name = "dataset_name_ignored"
-            pass
-        else:
-            self._get_dataset_name()
-            self._get_samples()
+            self.disable_log()
+        self._get_dataset_name()
+        self._get_samples()
+        self.enable_log()
     
     def _get_dataset_name(self) -> None:
         name = self.custom["Internal dataset name"]
