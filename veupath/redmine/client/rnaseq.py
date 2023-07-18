@@ -45,7 +45,7 @@ class RNAseq(RedmineIssue):
             self.is_ref_change = True
         self.new_genome = False
         
-        valid_operations = {"Other", "Reference change"}
+        valid_operations = {"Other", "Reference change", "Patch build"}
         operations = self.operations.copy()
         for operation in operations:
             if operation not in valid_operations:
@@ -145,8 +145,8 @@ class RNAseq(RedmineIssue):
         """
         Extract RNA-Seq metadata from a Redmine issue
         """
-        if self.is_ref_change or "Other" in self.operations:
-            self.dataset_name = "(dataset_name ignored)"
+        if self.is_ref_change or "Other" in self.operations or "Patch build" in self.operations:
+            self.dataset_name = "dataset_name_ignored"
             pass
         else:
             self._get_dataset_name()
