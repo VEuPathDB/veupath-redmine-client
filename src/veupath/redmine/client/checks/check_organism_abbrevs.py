@@ -39,13 +39,11 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
         genomes += issues
         redmine.remove_filter("datatype")
     print(f"{len(genomes)} issues for genomes")
-    
+
     return genomes
 
 
-def categorize_abbrevs(issues: List[RedmineIssue],
-                       cur_abbrevs_path: str = "") -> Dict[str, List[Genome]]:
-
+def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -> Dict[str, List[Genome]]:
     cur_abbrevs = OrgsUtils.load_abbrevs(cur_abbrevs_path)
     category: Dict[str, List[Genome]] = {
         "set_new": [],
@@ -72,14 +70,14 @@ def categorize_abbrevs(issues: List[RedmineIssue],
             new_org = OrgsUtils.generate_abbrev(exp_organism)
             genome.organism_abbrev = new_org
             new_abbrev = True
-        
+
         # Check that the format of the abbrev is valid
         try:
             OrgsUtils.validate_abbrev(genome.organism_abbrev)
             valid_abbrev = True
         except InvalidAbbrev:
             valid_abbrev = False
-        
+
         # Check if the abbrev is already in use
         if genome.organism_abbrev.lower() in cur_abbrevs:
             used_abbrev = True
@@ -88,7 +86,7 @@ def categorize_abbrevs(issues: List[RedmineIssue],
             duplicate = True
         else:
             previous_names.update([genome.organism_abbrev])
-        
+
         # Categorize
         if not valid_abbrev:
             category["invalid"].append(genome)
@@ -111,7 +109,7 @@ def categorize_abbrevs(issues: List[RedmineIssue],
                         category["to_update"].append(genome)
                     else:
                         category["set_new"].append(genome)
-    
+
     return category
 
 
@@ -140,12 +138,12 @@ def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
 
 def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
-    to_name = categories['to_update']
+    to_name = categories["to_update"]
     print(f"\n{len(to_name)} new organism abbrevs to update:")
     for genome in to_name:
         new_org = genome.organism_abbrev
         line = [f"{new_org:20}", str(genome.issue.id)]
-        status = redmine.update_custom_value(genome, 'Organism Abbreviation', new_org)
+        status = redmine.update_custom_value(genome, "Organism Abbreviation", new_org)
         if status:
             line.append("UPDATED")
         else:
@@ -155,30 +153,35 @@ def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue], cu
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='List and generate organism_abbrevs from Redmine')
-    
-    parser.add_argument('--key', type=str,
-                        help='Redmine authentification key')
+    parser = argparse.ArgumentParser(description="List and generate organism_abbrevs from Redmine")
 
-    parser.add_argument('--check', action='store_true', dest='check',
-                        help='Show the organism_abbrev status for the selected issues')
-    parser.add_argument('--update', action='store_true', dest='update',
-                        help='Actually update the organism_abbrevs for the selected issues')
+    parser.add_argument("--key", type=str, help="Redmine authentification key")
+
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        dest="check",
+        help="Show the organism_abbrev status for the selected issues",
+    )
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        dest="update",
+        help="Actually update the organism_abbrevs for the selected issues",
+    )
 
     # Optional
-    parser.add_argument('--build', type=int,
-                        help='Restrict to a given build')
-    
-    parser.add_argument('--current_abbrevs', type=str, required=False,
-                        help='Path to a list of current abbrevs')
+    parser.add_argument("--build", type=int, help="Restrict to a given build")
 
-    parser.add_argument('--validate', type=str,
-                        help='Check the validity of one abbreviation')
-    parser.add_argument('--generate_abbrev', type=str,
-                        help='Generate an abbrev from a species full name')
+    parser.add_argument(
+        "--current_abbrevs", type=str, required=False, help="Path to a list of current abbrevs"
+    )
+
+    parser.add_argument("--validate", type=str, help="Check the validity of one abbreviation")
+    parser.add_argument("--generate_abbrev", type=str, help="Generate an abbrev from a species full name")
 
     args = parser.parse_args()
-    
+
     if args.validate:
         try:
             OrgsUtils.validate_abbrev(args.validate)

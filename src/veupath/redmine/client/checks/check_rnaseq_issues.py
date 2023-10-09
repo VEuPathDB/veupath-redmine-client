@@ -27,18 +27,19 @@ from veupath.redmine.client.orgs_utils import OrgsUtils
 
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
-no_spliced_components = ('TriTrypDB', 'MicrospordiaDB')
+no_spliced_components = ("TriTrypDB", "MicrospordiaDB")
 
-valid_status_handover = ('New', 'Data Processing (EBI)')
+valid_status_handover = ("New", "Data Processing (EBI)")
 valid_status_anytime = (
-    'New',
-    'Data Processing (EBI)',
-    'Ready for Release',
-    'Post Loading Config and QA',
-    'Pre-loading data preparation',
-    'Assessment for Loading',
-    'Outreach QA',
-    )
+    "New",
+    "Data Processing (EBI)",
+    "Ready for Release",
+    "Post Loading Config and QA",
+    "Pre-loading data preparation",
+    "Assessment for Loading",
+    "Outreach QA",
+)
+
 
 def get_rnaseq_issues(redmine: VeupathRedmineClient) -> List[RNAseq]:
     """Get issues for all RNA-Seq datasets"""
@@ -54,7 +55,7 @@ def get_rnaseq_issues(redmine: VeupathRedmineClient) -> List[RNAseq]:
             datasets.append(dataset)
         redmine.remove_filter("datatype")
     print(f"{len(datasets)} issues for RNA-Seq")
-    
+
     return datasets
 
 
@@ -65,31 +66,30 @@ def add_no_spliced(dataset: RNAseq) -> None:
 
 def categorize_datasets(datasets: List[RNAseq]) -> Dict[str, List[RNAseq]]:
     validity: Dict[str, List[RNAseq]] = {
-        'valid': [],
-        'invalid': [],
-        'reference_change': [],
-        'patch_build': [],
-        'new': [],
-        'new_genome': [],
-        'other': [],
+        "valid": [],
+        "invalid": [],
+        "reference_change": [],
+        "patch_build": [],
+        "new": [],
+        "new_genome": [],
+        "other": [],
     }
     for dataset in datasets:
-
         if dataset.errors:
-            validity['invalid'].append(dataset)
+            validity["invalid"].append(dataset)
         else:
             if dataset.is_ref_change:
-                validity['reference_change'].append(dataset)
+                validity["reference_change"].append(dataset)
             elif "Patch build" in dataset.operations:
-                validity['patch_build'].append(dataset)
+                validity["patch_build"].append(dataset)
             elif "Other" in dataset.operations:
-                validity['other'].append(dataset)
+                validity["other"].append(dataset)
             elif dataset.new_genome:
-                validity['new_genome'].append(dataset)
+                validity["new_genome"].append(dataset)
             else:
-                validity['new'].append(dataset)
-            validity['valid'].append(dataset)
-    
+                validity["new"].append(dataset)
+            validity["valid"].append(dataset)
+
     categories = validity
     return categories
 
@@ -105,16 +105,16 @@ def check_datasets(datasets) -> None:
 
 def report_issues(datasets: List[RNAseq], report: str) -> None:
     categories = categorize_datasets(datasets)
-    all_datasets: List[RNAseq] = categories['valid']
+    all_datasets: List[RNAseq] = categories["valid"]
     if not all_datasets:
         print("No valid dataset to report")
         return
 
-    new: List[RNAseq] = categories['new']
-    new_genome: List[RNAseq] = categories['new_genome']
+    new: List[RNAseq] = categories["new"]
+    new_genome: List[RNAseq] = categories["new_genome"]
     new += new_genome
-    remaps: List[RNAseq] = categories['reference_change']
-    others: List[RNAseq] = categories['other']
+    remaps: List[RNAseq] = categories["reference_change"]
+    others: List[RNAseq] = categories["other"]
 
     build = 0
     components = {}
@@ -122,7 +122,7 @@ def report_issues(datasets: List[RNAseq], report: str) -> None:
         version = str(dataset.issue.fixed_version)
         build = int(version[-2:])
         comp = dataset.component
-        
+
         if comp not in components:
             components[comp] = [dataset]
         else:
@@ -132,7 +132,8 @@ def report_issues(datasets: List[RNAseq], report: str) -> None:
 
     lines = []
 
-    lines.append("""<html>
+    lines.append(
+        """<html>
 <head>
 <title>BRC4 RNA-Seq report</title>
 <style>
@@ -150,7 +151,8 @@ th {
 </style>
 </head>
 <body>
-    """)
+    """
+    )
     lines.append(f"<h1>EBI RNA-Seq processing - VEuPathDB build {build}</h1>")
     lines.append(f"<p>{len(new)} new datasets handed over:</p>")
     lines.append("<ul>")
@@ -179,7 +181,7 @@ th {
     lines.append("<h1>New datasets</h1>")
     lines.append("<table>")
     new.sort(key=lambda i: (i.component, i.organism_abbrev, i.dataset_name))
-    header = ('Redmine', 'Component', 'Species', 'Dataset', 'Samples', 'Notes')
+    header = ("Redmine", "Component", "Species", "Dataset", "Samples", "Notes")
     lines.append("<tr><th>" + "</th><th>".join(header) + "</th></tr>")
     for dataset in new:
         content = (
@@ -188,7 +190,7 @@ th {
             dataset.organism_abbrev,
             dataset.dataset_name,
             str(len(dataset.samples)),
-            ""
+            "",
         )
         lines.append("<tr><td>" + "</td><td>".join(content) + "</td></tr>")
     lines.append("</table>")
@@ -198,9 +200,8 @@ th {
 
 
 def store_issues(issues, output_dir: Path) -> None:
-
     categories = categorize_datasets(issues)
-    all_datasets: List[RNAseq] = categories['valid']
+    all_datasets: List[RNAseq] = categories["valid"]
     if not all_datasets:
         print("No valid dataset to report")
         return
@@ -224,7 +225,7 @@ def store_issues(issues, output_dir: Path) -> None:
                 comp_dir.mkdir(parents=True)
             except FileExistsError:
                 pass
-        
+
             dataset_name = f"{dataset.organism_abbrev}_{dataset.dataset_name}"
             organism_file = comp_dir / f"{dataset_name}.json"
             with organism_file.open("w") as f:
@@ -235,12 +236,12 @@ def store_issues(issues, output_dir: Path) -> None:
                     cur_datasets_structs.append(dataset_struct)
                 json.dump([dataset_struct], f, indent=True, sort_keys=True)
 
-        cur_structs_file = output_dir / 'all_cur.json'
+        cur_structs_file = output_dir / "all_cur.json"
         with cur_structs_file.open("w") as f:
             json.dump(cur_datasets_structs, f, indent=True, sort_keys=True)
 
         if new_datasets_structs:
-            new_structs_file = output_dir / 'all_new.json'
+            new_structs_file = output_dir / "all_new.json"
             with new_structs_file.open("w") as f:
                 json.dump(new_datasets_structs, f, indent=True, sort_keys=True)
 
@@ -267,32 +268,33 @@ def add_abbrev_flag(datasets: List[RNAseq], abbrev_file: Path) -> List:
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='List RNA-Seq issues from Redmine')
-    
-    parser.add_argument('--key', type=str, required=True,
-                        help='Redmine authentification key')
-    
-    parser.add_argument('--check', action='store_true', dest='check',
-                        help='Parse issues and report errors')
-    parser.add_argument('--report', type=str,
-                        help='Write a report to a file')
-    parser.add_argument('--store', type=str,
-                        help='Write json files for each Redmine issue')
+    parser = argparse.ArgumentParser(description="List RNA-Seq issues from Redmine")
+
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
+
+    parser.add_argument("--check", action="store_true", dest="check", help="Parse issues and report errors")
+    parser.add_argument("--report", type=str, help="Write a report to a file")
+    parser.add_argument("--store", type=str, help="Write json files for each Redmine issue")
     # Optional
-    parser.add_argument('--build', type=int,
-                        help='Restrict to a given build')
-    parser.add_argument('--component', type=str,
-                        help='Restrict to a given component')
-    parser.add_argument('--species', type=str,
-                        help='Get all RNA-Seq data for a given species (organism_abbrev)')
-    parser.add_argument('--any_team', action='store_true', dest='any_team',
-                        help='Do not filter by the processing team')
-    parser.add_argument('--valid_status', action='store_true', dest='valid_status',
-                        help='Filter out invalid status')
-    parser.add_argument('--current_abbbrevs', type=str, dest='current_abbrevs',
-                        help='A file that contains current abbrevs (otherwise dataset is for a new genome)')
+    parser.add_argument("--build", type=int, help="Restrict to a given build")
+    parser.add_argument("--component", type=str, help="Restrict to a given component")
+    parser.add_argument(
+        "--species", type=str, help="Get all RNA-Seq data for a given species (organism_abbrev)"
+    )
+    parser.add_argument(
+        "--any_team", action="store_true", dest="any_team", help="Do not filter by the processing team"
+    )
+    parser.add_argument(
+        "--valid_status", action="store_true", dest="valid_status", help="Filter out invalid status"
+    )
+    parser.add_argument(
+        "--current_abbbrevs",
+        type=str,
+        dest="current_abbrevs",
+        help="A file that contains current abbrevs (otherwise dataset is for a new genome)",
+    )
     args = parser.parse_args()
-    
+
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
 
@@ -306,10 +308,10 @@ def main():
     if args.species:
         redmine.set_organism(args.species)
     datasets = get_rnaseq_issues(redmine)
-    
+
     if args.current_abbrevs:
         datasets = add_abbrev_flag(datasets, Path(args.current_abbrevs))
-    
+
     for dat in datasets:
         if dat.new_genome:
             print(f"New genome for {dat}")

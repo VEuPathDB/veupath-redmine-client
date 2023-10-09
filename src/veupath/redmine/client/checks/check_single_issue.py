@@ -48,15 +48,15 @@ def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int)
         check_issue(redmine_issue, build)
     else:
         print(f"Unsupported datatype {datatype} for issue {issue_id}")
-    
+
     errors = redmine_issue.errors
     warnings = redmine_issue.warnings
     if errors:
         print(f"This issue has {len(errors)} errors:")
-        [ print(f"- {error}") for error in errors ]
+        [print(f"- {error}") for error in errors]
     if warnings:
         print(f"This issue has {len(warnings)} warnings:")
-        [ print(f"- {warning}") for warning in warnings ]
+        [print(f"- {warning}") for warning in warnings]
     if not (errors or warnings):
         print("No error found")
 
@@ -70,21 +70,17 @@ def check_issue(issue: RedmineIssue, build: str):
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Check a single issue from Redmine')
-    
-    parser.add_argument('--key', type=str, required=True,
-                        help='Redmine authentification key')
+    parser = argparse.ArgumentParser(description="Check a single issue from Redmine")
 
-    parser.add_argument('--id', type=str, required=True,
-                        help='ID of the issue to check')
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
+
+    parser.add_argument("--id", type=str, required=True, help="ID of the issue to check")
 
     # Optional
-    parser.add_argument('--build', type=str,
-                        help='Restrict to a given build')
-    parser.add_argument('--email', type=str,
-                        help='Set this email to use Entrez and check the INSDC records')
+    parser.add_argument("--build", type=str, help="Restrict to a given build")
+    parser.add_argument("--email", type=str, help="Set this email to use Entrez and check the INSDC records")
     args = parser.parse_args()
-    
+
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
     if args.email:

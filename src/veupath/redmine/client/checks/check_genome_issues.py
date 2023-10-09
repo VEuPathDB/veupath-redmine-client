@@ -40,28 +40,28 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
             genomes.append(genome)
         redmine.remove_filter("datatype")
     print(f"{len(genomes)} issues for genomes")
-    
+
     return genomes
 
 
 def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]]:
     validity: Dict[str, List[Genome]] = {
-        'valid': [],
-        'invalid': [],
+        "valid": [],
+        "invalid": [],
     }
     operations: Dict[str, List[Genome]] = {}
     warnings: Dict[str, List[Genome]] = {
-        'with warnings': [],
+        "with warnings": [],
     }
     for genome in genomes:
         if genome.errors:
-            validity['invalid'].append(genome)
+            validity["invalid"].append(genome)
         else:
-            validity['valid'].append(genome)
-        
+            validity["valid"].append(genome)
+
         if genome.warnings:
-            warnings['with warnings'].append(genome)
-        
+            warnings["with warnings"].append(genome)
+
         if genome.gff:
             gff_operation = "Load from GFF"
             if gff_operation in operations:
@@ -84,7 +84,7 @@ def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]
                 operations[key].append(genome)
             else:
                 operations[key] = [genome]
-    
+
     categories = {**warnings, **validity, **operations}
     return categories
 
@@ -106,7 +106,7 @@ def check_genome_issues(genomes) -> None:
 
 def report_genome_issues(genomes, report: str) -> None:
     categories = categorize_genome_issues(genomes)
-    all_genomes: List[Genome] = categories['valid']
+    all_genomes: List[Genome] = categories["valid"]
 
     new_genomes_operations = ("Load from INSDC", "Load from RefSeq", "Load from EnsEMBL")
 
@@ -122,17 +122,17 @@ def report_genome_issues(genomes, report: str) -> None:
         for op in genome.operations:
             if op in new_genomes_operations:
                 is_new_genome = True
-        
+
         if is_new_genome:
             new_genomes.append(genome)
         else:
             others.append(genome)
             others.sort(key=lambda i: i.organism_abbrev)
-    
+
     components = {}
     for genome in new_genomes:
         comp = genome.component
-        
+
         if comp not in components:
             components[comp] = [genome]
         else:
@@ -141,12 +141,14 @@ def report_genome_issues(genomes, report: str) -> None:
     comp_order.sort()
 
     lines = []
-    lines.append("""<html>
+    lines.append(
+        """<html>
 <head>
 <title>BRC4 genomes report</title>
 </head>
 <body>
-    """)
+    """
+    )
     lines.append(f"<h1>EBI genomes processing - VEuPathDB build {build}</h1>")
     lines.append(f"<p>{len(all_genomes)} genomes handed over.</p>")
     lines.append(f"<p>{len(new_genomes)} new genomes:</p>")
@@ -161,7 +163,9 @@ def report_genome_issues(genomes, report: str) -> None:
         lines.append("<ul>")
         for genome in others:
             operations = ", ".join(genome.operations)
-            lines.append(f"<li>{operations}: {genome.component} {genome.organism_abbrev} ({genome.redmine_link()})</li>")
+            lines.append(
+                f"<li>{operations}: {genome.component} {genome.organism_abbrev} ({genome.redmine_link()})</li>"
+            )
         lines.append("</ul>")
 
     for comp in comp_order:
@@ -183,31 +187,32 @@ def report_genome_issues(genomes, report: str) -> None:
             lines.append(f"<li>{line_text}</li>")
         lines.append("</ul>")
 
-    lines.append("""
+    lines.append(
+        """
     <p></p>
     </body>
 </html>
-    """)
+    """
+    )
     with open(report, "w") as report_fh:
         report_fh.write("\n".join(lines))
 
 
 def store_genome_issues(issues, output_dir) -> None:
-
     group_names = {
-        'Reference change': 'reference_change',
-        'Load from RefSeq': 'new_genomes',
-        'Load from INSDC': 'new_genomes',
-        'Allocate stable ids': 'stable_ids',
-        'Load from EnsEMBL': 'copy_ensembl',
-        'Patch build': 'patch_build',
-        'Load from GFF': 'load_gff',
-        'Other': 'other',
-        'Replacement': 'replacement',
+        "Reference change": "reference_change",
+        "Load from RefSeq": "new_genomes",
+        "Load from INSDC": "new_genomes",
+        "Allocate stable ids": "stable_ids",
+        "Load from EnsEMBL": "copy_ensembl",
+        "Patch build": "patch_build",
+        "Load from GFF": "load_gff",
+        "Other": "other",
+        "Replacement": "replacement",
     }
     no_extraction = (
-        'valid',
-        'invalid',
+        "valid",
+        "invalid",
     )
 
     categories = categorize_genome_issues(issues)
@@ -219,13 +224,13 @@ def store_genome_issues(issues, output_dir) -> None:
             if group in group_names:
                 group_name = group_names[group]
             else:
-                group_name = group.replace(' ', '_').lower()
+                group_name = group.replace(" ", "_").lower()
             group_dir = os.path.join(output_dir, group_name)
             try:
                 os.makedirs(group_dir)
             except FileExistsError:
                 pass
-            
+
             for genome in genomes:
                 if genome.errors:
                     continue
@@ -237,31 +242,26 @@ def store_genome_issues(issues, output_dir) -> None:
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='List genome issues from Redmine')
-    
-    parser.add_argument('--key', type=str, required=True,
-                        help='Redmine authentification key')
+    parser = argparse.ArgumentParser(description="List genome issues from Redmine")
 
-    parser.add_argument('--check', action='store_true', dest='check',
-                        help='Parse issues and report errors')
-    parser.add_argument('--summary', action='store_true', dest='summary',
-                        help='Short count of all categories')
-    parser.add_argument('--report', type=str,
-                        help='Write a report to a file')
-    parser.add_argument('--store', type=str,
-                        help='Write json files for each Redmine issue')
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
+
+    parser.add_argument("--check", action="store_true", dest="check", help="Parse issues and report errors")
+    parser.add_argument(
+        "--summary", action="store_true", dest="summary", help="Short count of all categories"
+    )
+    parser.add_argument("--report", type=str, help="Write a report to a file")
+    parser.add_argument("--store", type=str, help="Write json files for each Redmine issue")
 
     # Optional
-    parser.add_argument('--build', type=int,
-                        help='Restrict to a given build')
-    parser.add_argument('--component', type=str,
-                        help='Restrict to a given component')
-    parser.add_argument('--any_team', action='store_true', dest='any_team',
-                        help='Do not filter by the processing team')
-    parser.add_argument('--email', type=str,
-                        help='Set this email to use Entrez and check the INSDC records')
+    parser.add_argument("--build", type=int, help="Restrict to a given build")
+    parser.add_argument("--component", type=str, help="Restrict to a given component")
+    parser.add_argument(
+        "--any_team", action="store_true", dest="any_team", help="Do not filter by the processing team"
+    )
+    parser.add_argument("--email", type=str, help="Set this email to use Entrez and check the INSDC records")
     args = parser.parse_args()
-    
+
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
     if not args.any_team:
