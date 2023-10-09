@@ -14,16 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import os
-import json
 import argparse
+import json
+import os
 from typing import Dict, List
+
 from Bio import Entrez
+
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
-
-supported_team = "Data Processing (EBI)"
 
 
 def get_genome_issues(redmine: VeupathRedmineClient) -> list:
@@ -220,7 +219,7 @@ def store_genome_issues(issues, output_dir) -> None:
             if group in group_names:
                 group_name = group_names[group]
             else:
-                group_name = group.replace(' ', '_')
+                group_name = group.replace(' ', '_').lower()
             group_dir = os.path.join(output_dir, group_name)
             try:
                 os.makedirs(group_dir)
@@ -266,7 +265,7 @@ def main():
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
     if not args.any_team:
-        redmine.add_filter("team", supported_team)
+        redmine.add_filter("team", "Data Processing (EBI)")
     if args.build:
         redmine.set_build(args.build)
     if args.component:

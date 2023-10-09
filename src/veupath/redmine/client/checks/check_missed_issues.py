@@ -14,10 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import argparse
+
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.issue_utils import IssueUtils
+
 
 supported_datatypes = (
     "Genome sequence and Annotation",

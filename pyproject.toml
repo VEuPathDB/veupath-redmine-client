@@ -55,6 +55,14 @@ dev = [
 homepage = "https://www.veupathdb.org"
 repository = "https://github.com/VEuPathDB/veupath-redmine-client"
 
+[project.scripts]
+# Checks
+check_genome_issues = "veupath.redmine.client.checks.check_genome_issues:main"
+check_missed_issues = "veupath.redmine.client.checks.check_missed_issues:main"
+check_organism_abbrevs = "veupath.redmine.client.checks.check_organism_abbrevs:main"
+check_rnaseq_issues = "veupath.redmine.client.checks.check_rnaseq_issues:main"
+check_single_issue = "veupath.redmine.client.checks.check_single_issue:main"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
