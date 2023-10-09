@@ -23,6 +23,9 @@ from .issue_utils import IssueUtils
 import argparse
 
 
+__version__ = "0.1.0"
+
+
 class RedmineFilter:
     """Simple object to store a list of filters to use for Redmine filtering"""
 
