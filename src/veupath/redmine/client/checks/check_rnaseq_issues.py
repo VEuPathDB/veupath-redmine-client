@@ -1,4 +1,4 @@
-#!env python3
+#!/usr/bin/env python
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
 #
@@ -14,10 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import os
-import json
 import argparse
+import json
 from pathlib import Path
 from typing import Dict, List
 
@@ -25,10 +23,10 @@ from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.rnaseq import RNAseq
 from veupath.redmine.client.orgs_utils import OrgsUtils
 
+
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
-no_spliced_components = ("TriTrypDB", "MicrospordiaDB")
-
+no_spliced_components = ("TriTrypDB", "MicrosporidiaDB")
 valid_status_handover = ("New", "Data Processing (EBI)")
 valid_status_anytime = (
     "New",
@@ -270,7 +268,7 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="List RNA-Seq issues from Redmine")
 
-    parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentication key")
 
     parser.add_argument("--check", action="store_true", dest="check", help="Parse issues and report errors")
     parser.add_argument("--report", type=str, help="Write a report to a file")
@@ -288,7 +286,7 @@ def main():
         "--valid_status", action="store_true", dest="valid_status", help="Filter out invalid status"
     )
     parser.add_argument(
-        "--current_abbbrevs",
+        "--current_abbrevs",
         type=str,
         dest="current_abbrevs",
         help="A file that contains current abbrevs (otherwise dataset is for a new genome)",

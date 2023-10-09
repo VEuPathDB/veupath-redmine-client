@@ -1,4 +1,4 @@
-#!env python3
+#!/usr/bin/env python
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
 #
@@ -14,16 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import os
-import json
 import argparse
-from typing import Dict, List
+
 from Bio import Entrez
+
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
 from veupath.redmine.client.rnaseq import RNAseq
 from veupath.redmine.client.redmine_issue import RedmineIssue
+
 
 supported_team = "Data Processing (EBI)"
 
@@ -72,7 +71,7 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Check a single issue from Redmine")
 
-    parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentication key")
 
     parser.add_argument("--id", type=str, required=True, help="ID of the issue to check")
 

@@ -1,4 +1,4 @@
-#!env python3
+#!/usr/bin/env python
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
 #
@@ -44,7 +44,7 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     return genomes
 
 
-def categorize_genome_issues(genomes, check_gff=False) -> Dict[str, List[Genome]]:
+def categorize_genome_issues(genomes) -> Dict[str, List[Genome]]:
     validity: Dict[str, List[Genome]] = {
         "valid": [],
         "invalid": [],
@@ -244,7 +244,7 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="List genome issues from Redmine")
 
-    parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentication key")
 
     parser.add_argument("--check", action="store_true", dest="check", help="Parse issues and report errors")
     parser.add_argument(

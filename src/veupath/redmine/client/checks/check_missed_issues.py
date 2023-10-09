@@ -1,4 +1,4 @@
-#!env python3
+#!/usr/bin/env python
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
 #
@@ -90,7 +90,7 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="List missed issues from Redmine")
 
-    parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentication key")
     # Choice
     parser.add_argument(
         "--get_missed",
