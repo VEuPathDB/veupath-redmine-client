@@ -1,4 +1,4 @@
-#!env python3
+#!/usr/bin/env python
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
 #
@@ -14,16 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import argparse
+
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.issue_utils import IssueUtils
+
 
 supported_datatypes = (
     "Genome sequence and Annotation",
     "Assembled genome sequence without annotation",
     "Gene Models",
-    "RNA-seq"
+    "RNA-seq",
 )
 supported_team = "Data Processing (EBI)"
 supported_status_id = 20
@@ -42,7 +43,7 @@ def get_missed_datasets(redmine: VeupathRedmineClient) -> list:
             datatype = cfs["DataType"]
             if datatype not in supported_datatypes:
                 missed.append(issue)
-    
+
     redmine.remove_filter("team")
     return missed
 
@@ -60,7 +61,7 @@ def get_missed_status(redmine: VeupathRedmineClient) -> list:
             team = cfs["VEuPathDB Team"]
             if team != "Data Processing (EBI)":
                 missed.append(issue)
-    
+
     redmine.remove_filter("status_id")
     return missed
 
@@ -87,48 +88,44 @@ def get_missed_assignee(redmine, user_id) -> list:
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='List missed issues from Redmine')
-    
-    parser.add_argument('--key', type=str, required=True,
-                        help='Redmine authentification key')
+    parser = argparse.ArgumentParser(description="List missed issues from Redmine")
+
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentication key")
     # Choice
-    parser.add_argument('--get_missed',
-                        choices=[
-                            'datasets',
-                            'status',
-                            'assignee',
-                            'all'
-                        ],
-                        required=True,
-                        help='Check which category of issues were missed')
+    parser.add_argument(
+        "--get_missed",
+        choices=["datasets", "status", "assignee", "all"],
+        required=True,
+        help="Check which category of issues were missed",
+    )
     # Optional
-    parser.add_argument('--build', type=int,
-                        help='Restrict to a given build')
-    parser.add_argument('--user_id', type=str,
-                        help='Restrict to a given user id (integer, or use "me" for yourself)')
+    parser.add_argument("--build", type=int, help="Restrict to a given build")
+    parser.add_argument(
+        "--user_id", type=str, help='Restrict to a given user id (integer, or use "me" for yourself)'
+    )
     args = parser.parse_args()
-    
+
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
     if args.build:
         redmine.set_build(args.build)
 
-    if args.get_missed == 'datasets':
+    if args.get_missed == "datasets":
         issues = get_missed_datasets(redmine)
         IssueUtils.print_issues(issues, "missed datasets")
 
-    elif args.get_missed == 'status':
+    elif args.get_missed == "status":
         issues = get_missed_status(redmine)
         IssueUtils.print_issues(issues, "missed status")
 
-    elif args.get_missed == 'assignee':
+    elif args.get_missed == "assignee":
         if not args.user_id:
             print("User id required for missed assignee")
             return
         issues = get_missed_assignee(redmine, args.user_id)
         IssueUtils.print_issues(issues, "missed assignee")
 
-    elif args.get_missed == 'all':
+    elif args.get_missed == "all":
         issues_ds = get_missed_datasets(redmine)
         IssueUtils.print_issues(issues_ds, "missed datasets")
 

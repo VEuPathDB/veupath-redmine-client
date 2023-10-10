@@ -30,8 +30,8 @@ class Genome(RedmineIssue):
         "Assembled genome sequence without annotation",
         "Gene Models",
     )
-    insdc_pattern = r'^GC[AF]_\d{9}(\.\d+)?$'
-    refseq_pattern = r'^GCF_\d{9}(\.\d+)?$'
+    insdc_pattern = r"^GC[AF]_\d{9}(\.\d+)?$"
+    refseq_pattern = r"^GCF_\d{9}(\.\d+)?$"
 
     def __init__(self, issue):
         super().__init__(issue)
@@ -40,13 +40,13 @@ class Genome(RedmineIssue):
         self.accession = ""
         self.annotated = self._is_annotated()
         self.insdc_metadata = dict()
-    
+
     def _is_annotated(self) -> bool:
         if self.datatype == "Genome sequence and Annotation":
             return True
         else:
             return False
-    
+
     def to_json_struct(self) -> Dict[str, Any]:
         data = {
             "BRC4": {
@@ -54,22 +54,20 @@ class Genome(RedmineIssue):
                 "organism_abbrev": self.organism_abbrev,
             },
             "species": {},
-            "assembly": {
-                "accession": self.accession
-            },
+            "assembly": {"accession": self.accession},
             "genebuild": {},
         }
         return data
-    
+
     def __str__(self) -> str:
         line = f"{IssueUtils.tostr(self.issue)} = {self.component}: {self.organism_abbrev}"
         line = line + f" - {', '.join(self.operations)}"
         if self.errors:
             line = line + f' (ERRORS: {", ".join(self.errors)})'
         else:
-            line = line + ' (valid issue)'
+            line = line + " (valid issue)"
         return line
-    
+
     def short_str(self) -> str:
         # status
         if self.errors:
@@ -97,13 +95,13 @@ class Genome(RedmineIssue):
                 component_str = component_str[0:12]
         else:
             component_str = "no component"
-        
+
         # Subject
         issue = self.issue
         subject = issue.subject
         if len(subject) > 64:
-            subject = subject[0:64] + '...'
-        
+            subject = subject[0:64] + "..."
+
         # Merge all
         line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}    {desc:32}    {subject}"
         errors = "\n".join([(" " * 13) + f"ERROR: {error}" for error in self.errors])
@@ -113,12 +111,12 @@ class Genome(RedmineIssue):
         if warnings:
             line = f"{line}\n{warnings}"
         return line
-    
+
     def parse(self) -> None:
         """
         Given a Veupath Redmine genome issue, extracts relevant data
         """
-        
+
         # First, check the datatype
         if self.custom["DataType"] not in self.supported_datatypes:
             raise DatatypeException(f"Datatype not supported: '{self.custom['DataType']}'")
@@ -148,27 +146,27 @@ class Genome(RedmineIssue):
         latest_accession = summary.get("LatestAccession")
         if latest_accession and latest_accession != self.accession:
             self.add_warning(f"Not the latest accession: {self.accession} -> {latest_accession}")
-        
+
         anomalous = summary.get("AnomalousList")
         if anomalous:
             for anomaly in anomalous:
                 self.add_warning(f"Anomaly: {anomaly['Property']}")
-    
+
     def _check_accession(self, accession: str) -> str:
         """
         Check the accession string format.
 
         Args:
             accession: accession to check
-        
+
         Returns:
             A valid INSDC accession, or an empty string
         """
         accession = accession.strip()
-        
+
         # Remove the url if it's in one
         # There might even be a trailing url
-        accession = re.sub(r'^.+/([^/]+)/?', r'\1', accession)
+        accession = re.sub(r"^.+/([^/]+)/?", r"\1", accession)
 
         if re.match(self.insdc_pattern, accession):
             if "Load from RefSeq" in self.operations and not re.match(self.refseq_pattern, accession):
@@ -178,7 +176,7 @@ class Genome(RedmineIssue):
             return accession
         else:
             return ""
-    
+
     def _get_insdc_accession(self) -> None:
         exclude_operations = {"Load from INSDC", "Load from RefSeq", "Load from EnsEMBL"}
         if not exclude_operations.intersection(self.operations) and self.is_replacement:
@@ -194,7 +192,7 @@ class Genome(RedmineIssue):
             self.add_error("Wrong INSDC accession format")
         else:
             self.accession = accession
-    
+
     def _get_gff(self) -> None:
         try:
             gff_path = self.custom["GFF 2 Load"]
@@ -212,14 +210,14 @@ class Genome(RedmineIssue):
 
         if replace.startswith("Yes"):
             self.is_replacement = True
-    
+
     def _get_insdc_metadata(self) -> Dict[str, Any]:
         if self.insdc_metadata:
             return self.insdc_metadata
 
         summary: Dict[str, Any] = dict()
         if Entrez.email and self.accession:
-            handle = Entrez.esearch(db="assembly", term=self.accession, retmax='5')
+            handle = Entrez.esearch(db="assembly", term=self.accession, retmax="5")
             try:
                 record = Entrez.read(handle, validate=False)
             except ValidationError:
@@ -265,9 +263,8 @@ class Genome(RedmineIssue):
         if self.gff:
             has_gff = True
         is_annotated = self.assembly_is_annotated()
-        
+
         if (has_gff or is_annotated) and not self.annotated:
             self.add_error("Got a gff but not expected to be annotated")
         if not (has_gff or is_annotated) and self.annotated:
             self.add_error("Got no gff but expected to be annotated")
-

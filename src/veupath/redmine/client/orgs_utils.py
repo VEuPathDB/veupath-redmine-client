@@ -36,8 +36,7 @@ class InvalidAbbrev(Exception):
 
 
 class OrgsUtils:
-
-    abbrev_format = r'^([a-z]{4}|[a-z]sp)[A-z0-9_.-]+$'
+    abbrev_format = r"^([a-z]{4}|[a-z]sp)[A-z0-9_.-]+$"
 
     @staticmethod
     def validate_abbrev(abbrev: str) -> None:
@@ -46,7 +45,6 @@ class OrgsUtils:
 
     @staticmethod
     def generate_abbrev(name) -> str:
-        
         name = name.strip()
         if name == "":
             raise InvalidOrganism(name, "field is empty")
@@ -59,18 +57,18 @@ class OrgsUtils:
         if species == "sp.":
             species = "sp"
 
-        if items[2] in ('var.', 'f.'):
+        if items[2] in ("var.", "f."):
             var = items[3]
             strain_abbrev = "".join(items[4:])
         else:
             var = ""
             strain_abbrev = "".join(items[2:])
-        
+
         genus = re.sub(r"[\[\]]", "", genus)
         strains_pattern = r"(isolate|strain|breed|str\.|subspecies|sp\.)"
         strain_abbrev = re.sub(strains_pattern, "", strain_abbrev, flags=re.IGNORECASE)
         strain_abbrev = re.sub(r"[\/\(\)#:+-]", "", strain_abbrev)
-        
+
         org_list = (genus[0].lower(), species[0:3], var[0:3], strain_abbrev)
         organism_abbrev = "".join(org_list)
 
@@ -93,5 +91,5 @@ class OrgsUtils:
         abbrevs = set(abbrevs_list)
 
         print(f"{len(abbrevs)} abbreviations loaded")
-        
+
         return abbrevs

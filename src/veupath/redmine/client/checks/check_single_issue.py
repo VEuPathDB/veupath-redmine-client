@@ -1,4 +1,4 @@
-#!env python3
+#!/usr/bin/env python
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
 #
@@ -14,16 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import os
-import json
 import argparse
-from typing import Dict, List
+
 from Bio import Entrez
+
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
 from veupath.redmine.client.rnaseq import RNAseq
 from veupath.redmine.client.redmine_issue import RedmineIssue
+
 
 supported_team = "Data Processing (EBI)"
 
@@ -48,15 +47,15 @@ def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int)
         check_issue(redmine_issue, build)
     else:
         print(f"Unsupported datatype {datatype} for issue {issue_id}")
-    
+
     errors = redmine_issue.errors
     warnings = redmine_issue.warnings
     if errors:
         print(f"This issue has {len(errors)} errors:")
-        [ print(f"- {error}") for error in errors ]
+        [print(f"- {error}") for error in errors]
     if warnings:
         print(f"This issue has {len(warnings)} warnings:")
-        [ print(f"- {warning}") for warning in warnings ]
+        [print(f"- {warning}") for warning in warnings]
     if not (errors or warnings):
         print("No error found")
 
@@ -70,21 +69,17 @@ def check_issue(issue: RedmineIssue, build: str):
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Check a single issue from Redmine')
-    
-    parser.add_argument('--key', type=str, required=True,
-                        help='Redmine authentification key')
+    parser = argparse.ArgumentParser(description="Check a single issue from Redmine")
 
-    parser.add_argument('--id', type=str, required=True,
-                        help='ID of the issue to check')
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentication key")
+
+    parser.add_argument("--id", type=str, required=True, help="ID of the issue to check")
 
     # Optional
-    parser.add_argument('--build', type=str,
-                        help='Restrict to a given build')
-    parser.add_argument('--email', type=str,
-                        help='Set this email to use Entrez and check the INSDC records')
+    parser.add_argument("--build", type=str, help="Restrict to a given build")
+    parser.add_argument("--email", type=str, help="Set this email to use Entrez and check the INSDC records")
     args = parser.parse_args()
-    
+
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
     if args.email:

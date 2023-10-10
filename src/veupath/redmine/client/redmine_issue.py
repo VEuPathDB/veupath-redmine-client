@@ -46,18 +46,18 @@ class RedmineIssue:
         self.operations = set(self._get_operations())
         self.datatype = self._get_datatype()
         self.team = self._get_team()
-    
+
     def add_error(self, msg: str) -> None:
         if self.do_log:
             self.errors.append(msg)
-    
+
     def add_warning(self, msg: str) -> None:
         if self.do_log:
             self.warnings.append(msg)
-    
+
     def disable_log(self) -> None:
         self.do_log = False
-    
+
     def enable_log(self) -> None:
         self.do_log = True
 
@@ -68,7 +68,7 @@ class RedmineIssue:
         except KeyError:
             pass
 
-        component = ''
+        component = ""
         if len(components) == 1:
             component = components[0]
         elif len(components) == 0:
@@ -84,9 +84,9 @@ class RedmineIssue:
             pass
 
         return team
-    
+
     def _get_organism_abbrev(self) -> str:
-        abbrev = ''
+        abbrev = ""
         try:
             abbrev = self.custom["Organism Abbreviation"]
         except KeyError:
@@ -104,19 +104,19 @@ class RedmineIssue:
         return abbrev
 
     def _get_experimental_organism(self) -> str:
-        experimental_organism = ''
+        experimental_organism = ""
         try:
             experimental_organism = self.custom["Experimental Organisms"]
         except KeyError:
             pass
         return experimental_organism
-    
+
     def _get_datatype(self) -> str:
         try:
             return self.custom["DataType"]
         except KeyError:
-            return ''
-    
+            return ""
+
     def redmine_link(self) -> str:
         link = f"{VeupathParams.redmine_url}/issues/{self.issue.id}"
         return f'<a href="{link}">{self.issue.id}</a>'

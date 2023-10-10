@@ -16,8 +16,7 @@
 
 
 class VeupathParams:
-
-    redmine_url = 'https://redmine.apidb.org'
+    redmine_url = "https://redmine.apidb.org"
     project_id = 1976
     issues_fields = {
         "status": "status_name",

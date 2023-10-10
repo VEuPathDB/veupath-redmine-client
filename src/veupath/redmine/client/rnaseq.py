@@ -31,9 +31,7 @@ class SamplesParsingException(Exception):
 class RNAseq(RedmineIssue):
     """RNA-Seq metadata representing a Redmine issue."""
 
-    supported_datatypes = (
-        "RNA-seq",
-    )
+    supported_datatypes = ("RNA-seq",)
 
     def __init__(self, issue):
         super().__init__(issue)
@@ -44,13 +42,13 @@ class RNAseq(RedmineIssue):
         if "Reference change" in self.operations:
             self.is_ref_change = True
         self.new_genome = False
-        
+
         valid_operations = {"Other", "Reference change", "Patch build"}
         operations = self.operations.copy()
         for operation in operations:
             if operation not in valid_operations:
                 self.operations.remove(operation)
-    
+
     def to_json_struct(self) -> Dict[str, Any]:
         data: Dict[str, Any] = {
             "component": "",
@@ -70,17 +68,17 @@ class RNAseq(RedmineIssue):
             data["no_spliced"] = True
 
         return data
-    
+
     def __str__(self) -> str:
         line = f"{IssueUtils.tostr(self.issue)} = {self.component}: {self.organism_abbrev}"
         if self.errors:
             line = line + f' (ERRORS: {", ".join(self.errors)})'
         else:
-            line = line + ' (valid issue)'
+            line = line + " (valid issue)"
         if self.is_ref_change:
             line += " (Reference change)"
         return line
-    
+
     def short_str(self) -> str:
         # status
         if self.errors:
@@ -107,7 +105,7 @@ class RNAseq(RedmineIssue):
                 component_str = component_str[0:9] + "..."
         else:
             component_str = "no component"
-        
+
         # Dataset
         if self.dataset_name:
             dataset_str = self.dataset_name
@@ -120,7 +118,7 @@ class RNAseq(RedmineIssue):
         issue = self.issue
         subject = issue.subject
         if len(subject) > 40:
-            subject = subject[0:37] + '...'
+            subject = subject[0:37] + "..."
 
         # Merge all
         line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}  {dataset_str:24}  {desc:22}  {subject}"
@@ -128,12 +126,12 @@ class RNAseq(RedmineIssue):
         if errors:
             line = f"{line}\n{errors}"
         return line
-    
+
     def parse(self) -> None:
         """
         Given a Veupath Redmine RNA-Seq issue, extracts relevant data
         """
-        
+
         # Check the datatype
         if self.custom["DataType"] not in self.supported_datatypes:
             raise DatatypeException(self.custom["DataType"])
@@ -150,7 +148,7 @@ class RNAseq(RedmineIssue):
         self._get_dataset_name()
         self._get_samples()
         self.enable_log()
-    
+
     def _get_dataset_name(self) -> None:
         name = self.custom["Internal dataset name"]
         if name:
@@ -171,20 +169,20 @@ class RNAseq(RedmineIssue):
                 self.add_error("Wrong sample format")
         else:
             self.add_error("Missing samples")
-    
+
     def _parse_samples(self, sample_str: str) -> List[Dict]:
         """Parse a list of samples from a Redmine task.
 
         Args:
             sample_str: The value of the field 'Sample Names' from an RNA-Seq Redmine task.
-        
+
         Returns:
             A list of samples dicts, with the following keys:
                 name: the name of the sample.
                 accessions: a list of string representing the SRA accessions for that sample.
         """
         samples = []
-        
+
         # Parse each line
         lines = sample_str.split("\n")
 
@@ -203,19 +201,19 @@ class RNAseq(RedmineIssue):
                     end = parts[-1]
                     start = ":".join(parts[:-1])
                     parts = [start, end]
-                
+
                 if len(parts) == 2:
                     sample_name = parts[0].strip()
-                    
+
                     if sample_name in sample_names:
                         sample_errors.append(f"repeated name {sample_name}")
                         continue
                     else:
                         sample_names[sample_name] = True
-                    
+
                     accessions_str = parts[1].strip()
                     accessions = [x.strip() for x in accessions_str.split(",")]
-                    
+
                     if not self._validate_accessions(accessions):
                         if self._validate_accessions(sample_name.split(",")):
                             sample_errors.append(f"name and accession switched? ({line})")
@@ -223,37 +221,34 @@ class RNAseq(RedmineIssue):
                         else:
                             sample_errors.append(f"Invalid accession in '{accessions}' ({line})")
                             continue
-                    
+
                     # Check uniqueness of SRA ids within this dataset
                     for accession in accessions:
                         if accession in accessions_count:
                             accessions_count[accession] += 1
                         else:
                             accessions_count[accession] = 1
-                    
-                    sample = {
-                        "name": self._normalize_name(sample_name),
-                        "accessions": accessions
-                    }
+
+                    sample = {"name": self._normalize_name(sample_name), "accessions": accessions}
                     samples.append(sample)
                 else:
                     sample_errors.append(f"sample line doesn't have 2 parts ({line})")
                     continue
-            
+
             duplicated = []
             for accession, count in accessions_count.items():
                 if count > 1:
                     duplicated.append(f"{accession} (x{count})")
             if duplicated:
                 raise SamplesParsingException(
-                    f"{len(duplicated)} accessions duplicates: {'; '.join(duplicated)}")
+                    f"{len(duplicated)} accessions duplicates: {'; '.join(duplicated)}"
+                )
 
             if sample_errors:
-                raise SamplesParsingException(
-                    f"{len(sample_errors)} errors: {'; '.join(sample_errors)}")
+                raise SamplesParsingException(f"{len(sample_errors)} errors: {'; '.join(sample_errors)}")
         except SamplesParsingException as e:
             self.add_error(str(e))
-        
+
         return samples
 
     def _validate_accessions(self, accessions: List[str]) -> bool:
@@ -269,21 +264,21 @@ class RNAseq(RedmineIssue):
         if "" in accessions:
             return False
         for acc in accessions:
-            if not re.search(r'^[SE]R[RSXP]\d+$', acc):
+            if not re.search(r"^[SE]R[RSXP]\d+$", acc):
                 return False
         return True
-    
+
     @staticmethod
     def _normalize_name(old_name: str) -> str:
         """Remove special characters from a name, keep ascii only.
 
         Args:
             old_name: the name to format.
-        
+
         Returns:
             The formatted name.
         """
-        
+
         # Remove any diacritics
         name = old_name.strip()
         name = unidecode(name)
@@ -296,5 +291,5 @@ class RNAseq(RedmineIssue):
         if re.search(NON_ASCII, name):
             print("WARNING: name contains special characters: %s (%s)" % (old_name, name))
             name = ""
-        
+
         return name

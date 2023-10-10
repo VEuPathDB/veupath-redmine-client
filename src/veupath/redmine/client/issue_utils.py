@@ -28,7 +28,7 @@ class IssueUtils:
         Put all Redmine custom fields in a dict instead of an array
         Return a dict where the value is the value of the field
         """
-        
+
         cfs = {}
         try:
             for c in issue.custom_fields:
@@ -38,7 +38,7 @@ class IssueUtils:
                     pass
         except exceptions.ResourceAttrError:
             pass
-        
+
         return cfs
 
     @staticmethod
@@ -47,7 +47,7 @@ class IssueUtils:
         Put all Redmine custom fields in a dict instead of an array
         Return a dict where the value is the id of the field
         """
-        
+
         cfs = {}
         try:
             for c in issue.custom_fields:
@@ -55,7 +55,7 @@ class IssueUtils:
         except exceptions.ResourceAttrError:
             pass
         return cfs
-    
+
     @staticmethod
     def tostr(issue) -> str:
         max_title = IssueUtils.max_title
@@ -70,7 +70,7 @@ class IssueUtils:
         title = issue.subject
         if len(title) > max_title:
             title = title[0:max_title] + "..."
-        
+
         cfs = IssueUtils.get_custom_fields(issue)
 
         build = "(no build)"

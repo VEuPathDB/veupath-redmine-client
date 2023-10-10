@@ -23,6 +23,9 @@ from .issue_utils import IssueUtils
 import argparse
 
 
+__version__ = "0.1.0"
+
+
 class RedmineFilter:
     """Simple object to store a list of filters to use for Redmine filtering"""
 
@@ -31,7 +34,7 @@ class RedmineFilter:
 
     def __init__(self) -> None:
         self.fields: dict = {}
-    
+
     def _map_key(self, name: str) -> str:
         key: str
         if name in self.field_map:
@@ -57,7 +60,7 @@ class VeupathRedmineFilter(RedmineFilter):
 
         supported_fields = VeupathParams.issues_fields
         self.field_map = {**self.field_map, **supported_fields}
-    
+
 
 class RedmineClient:
     """Wrapper around Redmine python to set up basic interactions"""
@@ -66,7 +69,7 @@ class RedmineClient:
         self.redmine = Redmine(url, key=key)
         self.filter = RedmineFilter()
         self.project_id = project_id
-    
+
     def get_custom_fields(self):
         rs_fields = self.redmine.custom_field.all()
         for rs_field in rs_fields:
@@ -99,15 +102,13 @@ class RedmineClient:
         issue = self.redmine.issue.get(issue_id)
         return issue
 
-
     def update_custom_value(self, issue: RedmineIssue, field_name: str, field_value: str) -> bool:
         custom = IssueUtils.get_custom_ids(issue.issue)
-        
+
         if field_name in custom:
             field_id = custom[field_name]
             feedback = self.redmine.issue.update(
-                issue.issue.id,
-                custom_fields=[{'id': field_id, 'value': field_value}]
+                issue.issue.id, custom_fields=[{"id": field_id, "value": field_value}]
             )
             if not feedback:
                 print(f"Failed to update {field_name} with value {field_value} in {issue.id}")
@@ -117,7 +118,7 @@ class RedmineClient:
         else:
             raise Exception(f"Can't find custom field named {field_name}")
         return False
-    
+
 
 class VeupathRedmineClient(RedmineClient):
     """More specific Redmine client for VEuPathDB project"""
@@ -137,29 +138,28 @@ class VeupathRedmineClient(RedmineClient):
 
     def set_organism(self, organism: int) -> None:
         self.add_filter("organism_abbrev", organism)
-    
+
     def set_component(self, component: int) -> None:
         self.add_filter("component", component)
 
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Retrieve metadata from Redmine')
-    
-    parser.add_argument('--key', type=str, required=True,
-                        help='Redmine authentification key')
+    parser = argparse.ArgumentParser(description="Retrieve metadata from Redmine")
+
+    parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
     # Optional
-    parser.add_argument('--build', type=int,
-                        help='Restrict to a given build')
-    parser.add_argument('--list', action='store_true', dest='list',
-                        help='Print a detailed list of all the issues')
+    parser.add_argument("--build", type=int, help="Restrict to a given build")
+    parser.add_argument(
+        "--list", action="store_true", dest="list", help="Print a detailed list of all the issues"
+    )
     args = parser.parse_args()
-    
+
     # Start Redmine API
     redmine = VeupathRedmineClient(key=args.key)
     if args.build:
         redmine.set_build(args.build)
-    
+
     redmine.add_filter("team", "Data Processing (EBI)")
     all_issues = redmine.get_issues()
     print(f"{len(all_issues)} issues selected")
