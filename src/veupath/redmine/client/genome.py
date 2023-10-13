@@ -152,27 +152,30 @@ class Genome(RedmineIssue):
             for anomaly in anomalous:
                 self.add_warning(f"Anomaly: {anomaly['Property']}")
 
-    def _check_accession(self, accession: str) -> str:
+    def _check_accession(self, full_accession: str) -> str:
         """
         Check the accession string format.
 
         Args:
-            accession: accession to check
+            full_accession: accession to check
 
         Returns:
             A valid INSDC accession, or an empty string
         """
-        accession = accession.strip()
+        full_accession = full_accession.strip()
 
         # Remove the url if it's in one
         # There might even be a trailing url
-        accession = re.sub(r"^.+/([^/]+)/?", r"\1", accession)
+        accession_str = re.sub(r"^.+/([^/]+)/?", r"\1", full_accession)
+        accession, version = accession_str.split(".")
 
         if re.match(self.insdc_pattern, accession):
             if "Load from RefSeq" in self.operations and not re.match(self.refseq_pattern, accession):
                 self.add_error(f"Accession {accession} is not a RefSeq accession")
             elif "Load from INSDC" in self.operations and re.match(self.refseq_pattern, accession):
                 self.add_error(f"Accession {accession} is a RefSeq accession, not INSDC")
+            elif version is None or not version.isdigit():
+                self.add_error(f"Accession {full_accession} doesn't have a version number")
             return accession
         else:
             return ""
