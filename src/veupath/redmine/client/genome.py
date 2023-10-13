@@ -16,10 +16,12 @@
 
 import re
 from typing import Any, Dict
-from .issue_utils import IssueUtils
-from .redmine_issue import RedmineIssue, DatatypeException
+
 from Bio import Entrez
 from Bio.Entrez.Parser import ValidationError
+
+from .issue_utils import IssueUtils
+from .redmine_issue import RedmineIssue, DatatypeException
 
 
 class Genome(RedmineIssue):
@@ -177,8 +179,7 @@ class Genome(RedmineIssue):
             elif version is None or not version.isdigit():
                 self.add_error(f"Accession {full_accession} doesn't have a version number")
             return accession
-        else:
-            return ""
+        return ""
 
     def _get_insdc_accession(self) -> None:
         exclude_operations = {"Load from INSDC", "Load from RefSeq", "Load from EnsEMBL"}
@@ -224,23 +225,25 @@ class Genome(RedmineIssue):
             try:
                 record = Entrez.read(handle, validate=False)
             except ValidationError:
-                self.errors("Validation error")
+                self.add_error("Validation error")
                 return summary
-            ids = record["IdList"]
+            accessions = record["IdList"]
 
-            if len(ids) == 0:
+            if len(accessions) == 0:
                 self.add_error("Assembly not found in INSDC")
             else:
-                if len(ids) > 1:
-                    print(f"{len(ids)} assemblies found for {self.accession}, using the first one ({ids[0]})")
-                id = ids[0]
-                summary_full = self.get_assembly_metadata(id)
+                if len(accessions) > 1:
+                    print(
+                        f"{len(accessions)} assemblies found for {self.accession}, using the first one ({accessions[0]})"
+                    )
+                accession = accessions[0]
+                summary_full = self.get_assembly_metadata(accession)
                 summary = summary_full["DocumentSummarySet"]["DocumentSummary"][0]
                 self.insdc_metadata = summary
         return summary
 
-    def get_assembly_metadata(self, id):
-        esummary_handle = Entrez.esummary(db="assembly", id=id, report="full")
+    def get_assembly_metadata(self, accession):
+        esummary_handle = Entrez.esummary(db="assembly", id=accession, report="full")
         esummary_record = Entrez.read(esummary_handle, validate=False)
         return esummary_record
 
