@@ -227,19 +227,19 @@ class Genome(RedmineIssue):
             except ValidationError:
                 self.add_error("Validation error")
                 return summary
-            accessions = record["IdList"]
+            id_list = record["IdList"]
 
-            if len(accessions) == 0:
+            if len(id_list) == 0:
                 self.add_error("Assembly not found in INSDC")
             else:
-                if len(accessions) > 1:
-                    print(
-                        f"{len(accessions)} assemblies found for {self.accession}, using the first one ({accessions[0]})"
-                    )
-                accession = accessions[0]
-                summary_full = self.get_assembly_metadata(accession)
-                summary = summary_full["DocumentSummarySet"]["DocumentSummary"][0]
-                self.insdc_metadata = summary
+                for accession_id in id_list:
+                    summary_full = self.get_assembly_metadata(accession_id)
+                    summary = summary_full["DocumentSummarySet"]["DocumentSummary"][0]
+                    if summary["AssemblyAccession"] == self.accession:
+                        if len(id_list) > 1:
+                            print(f"{self.accession} matched {len(id_list)} assemblies, using {accession_id}")
+                        self.insdc_metadata = summary
+                        break
         return summary
 
     def get_assembly_metadata(self, accession):
