@@ -16,10 +16,12 @@
 
 import re
 from typing import Any, Dict
-from .issue_utils import IssueUtils
-from .redmine_issue import RedmineIssue, DatatypeException
+
 from Bio import Entrez
 from Bio.Entrez.Parser import ValidationError
+
+from .issue_utils import IssueUtils
+from .redmine_issue import RedmineIssue, DatatypeException
 
 
 class Genome(RedmineIssue):
@@ -152,30 +154,32 @@ class Genome(RedmineIssue):
             for anomaly in anomalous:
                 self.add_warning(f"Anomaly: {anomaly['Property']}")
 
-    def _check_accession(self, accession: str) -> str:
+    def _check_accession(self, full_accession: str) -> str:
         """
         Check the accession string format.
 
         Args:
-            accession: accession to check
+            full_accession: accession to check
 
         Returns:
             A valid INSDC accession, or an empty string
         """
-        accession = accession.strip()
+        full_accession = full_accession.strip()
 
         # Remove the url if it's in one
         # There might even be a trailing url
-        accession = re.sub(r"^.+/([^/]+)/?", r"\1", accession)
+        accession_str = re.sub(r"^.+/([^/]+)/?", r"\1", full_accession)
+        accession, version = accession_str.split(".")
 
         if re.match(self.insdc_pattern, accession):
             if "Load from RefSeq" in self.operations and not re.match(self.refseq_pattern, accession):
                 self.add_error(f"Accession {accession} is not a RefSeq accession")
             elif "Load from INSDC" in self.operations and re.match(self.refseq_pattern, accession):
                 self.add_error(f"Accession {accession} is a RefSeq accession, not INSDC")
+            elif version is None or not version.isdigit():
+                self.add_error(f"Accession {full_accession} doesn't have a version number")
             return accession
-        else:
-            return ""
+        return ""
 
     def _get_insdc_accession(self) -> None:
         exclude_operations = {"Load from INSDC", "Load from RefSeq", "Load from EnsEMBL"}
@@ -221,7 +225,7 @@ class Genome(RedmineIssue):
             try:
                 record = Entrez.read(handle, validate=False)
             except ValidationError:
-                self.errors("Validation error")
+                self.add_error("Validation error")
                 return summary
             id_list = record["IdList"]
 
@@ -238,8 +242,8 @@ class Genome(RedmineIssue):
                         break
         return summary
 
-    def get_assembly_metadata(self, id):
-        esummary_handle = Entrez.esummary(db="assembly", id=id, report="full")
+    def get_assembly_metadata(self, accession):
+        esummary_handle = Entrez.esummary(db="assembly", id=accession, report="full")
         esummary_record = Entrez.read(esummary_handle, validate=False)
         return esummary_record
 
