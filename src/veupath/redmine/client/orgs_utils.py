@@ -84,8 +84,8 @@ class OrgsUtils:
         abbrevs_list = []
         with open(abbrev_path, "r") as abbrev_file:
             for line in abbrev_file:
-                if re.match("\t| ", line):
-                    raise Exception("Abbreviation file contains spaces or columns")
+                if re.search("\t| ", line):
+                    raise ValueError("Abbreviation file contains spaces or columns")
                 abbrev = line.strip().lower()
                 abbrevs_list.append(abbrev)
         abbrevs = set(abbrevs_list)
