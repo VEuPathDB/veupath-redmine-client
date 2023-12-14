@@ -264,7 +264,7 @@ class RNAseq(RedmineIssue):
         if "" in accessions:
             return False
         for acc in accessions:
-            if not re.search(r"^[SE]R[RSXP]\d+$", acc):
+            if not re.search(r"^[SED]R[RSXP]\d+$", acc):
                 return False
         return True
 
