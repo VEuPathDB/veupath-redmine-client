@@ -208,7 +208,9 @@ def store_issues(issues, output_dir: Path) -> None:
         new_datasets_structs = []
         for dataset in all_datasets:
             sub_dir = "cur_genome"
-            if dataset.is_ref_change or "Patch build" in dataset.operations:
+            if dataset.is_ref_change or "Patch build" in dataset.operations or "Reference change" in dataset.operations:
+                print(f"Not stored: {dataset}")
+                sub_dir = "not_dataset"
                 continue
             elif "Other" in dataset.operations:
                 sub_dir = "other"
