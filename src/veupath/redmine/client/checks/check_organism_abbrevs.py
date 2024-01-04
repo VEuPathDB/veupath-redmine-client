@@ -120,23 +120,26 @@ def categorize_abbrevs(
 
 def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: Optional[PathLike]) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
+    
+    cats = {
+            "invalid": "WARNING: the format of the abbrev is not valid",
+            "duplicate": "WARNING: several tickets use the same abbrev",
+            "used_abbrev": "WARNING: abbrev is set in the ticket and known, check that the operation needs a known abbrev",
+            "unknown_replacement": "WARNING: abbrev is set in the ticket and new, not expected for a replacement",
+            "set_new": "OK: abbrev is already set in the ticket and is new",
+            "set_replacement": "OK: abbrev is set in the ticket and is known, expected for a replacement",
+            "to_update": "TODO: add --update to generate the organism_abbrev and update the tickets",
+    }
 
-    for cat in (
-        "invalid",
-        "duplicate",
-        "used_abbrev",
-        "unknown_replacement",
-        "set_new",
-        "set_replacement",
-        "to_update",
-    ):
+    for cat, description in cats.items():
         cat_genomes = categories[cat]
         if len(cat_genomes) == 0:
             continue
-        print(f"\n{len(cat_genomes)} {cat.upper()} organism abbrevs:")
+        print(f"\n{len(cat_genomes)} {cat.upper()} organism abbrevs\n\t{description}:")
         for genome in cat_genomes:
             new_org = genome.organism_abbrev
             line = [f"{new_org:20}", str(genome.issue.id)]
+            line.append(f"({', '.join(genome.operations)})")
             line.append(f"From {genome.experimental_organism}")
             print("\t".join(line))
 
