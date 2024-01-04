@@ -15,7 +15,9 @@
 # limitations under the License.
 
 import argparse
-from typing import Dict, List
+from os import PathLike
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from veupath.redmine.client import VeupathRedmineClient
 from veupath.redmine.client.genome import Genome
@@ -44,7 +46,9 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     return genomes
 
 
-def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -> Dict[str, List[Genome]]:
+def categorize_abbrevs(
+    issues: List[RedmineIssue], cur_abbrevs_path: Optional[PathLike]
+) -> Dict[str, List[Genome]]:
     cur_abbrevs = OrgsUtils.load_abbrevs(cur_abbrevs_path)
     category: Dict[str, List[Genome]] = {
         "set_new": [],
@@ -114,7 +118,7 @@ def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -
     return category
 
 
-def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
+def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: Optional[PathLike]) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
 
     for cat in (
@@ -137,7 +141,9 @@ def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
             print("\t".join(line))
 
 
-def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
+def update_abbrevs(
+    redmine: VeupathRedmineClient, issues: List[RedmineIssue], cur_abbrevs_path: Optional[PathLike]
+) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
     to_name = categories["to_update"]
     print(f"\n{len(to_name)} new organism abbrevs to update:")
@@ -208,11 +214,12 @@ def main():
             redmine.set_build(args.build)
 
         issues = get_genome_issues(redmine)
+        current_abbrevs = Path(args.current_abbrevs)
 
         if args.check:
-            check_abbrevs(issues, args.current_abbrevs)
+            check_abbrevs(issues, current_abbrevs)
         elif args.update:
-            update_abbrevs(redmine, issues, args.current_abbrevs)
+            update_abbrevs(redmine, issues, current_abbrevs)
 
 
 if __name__ == "__main__":

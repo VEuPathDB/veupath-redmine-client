@@ -27,7 +27,7 @@ from veupath.redmine.client.redmine_issue import RedmineIssue
 supported_team = "Data Processing (EBI)"
 
 
-def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int) -> list:
+def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int) -> None:
     """Check a single issue given an ID"""
 
     issue = redmine.get_issue(issue_id)
@@ -60,7 +60,7 @@ def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int)
         print("No error found")
 
 
-def check_issue(issue: RedmineIssue, build: str):
+def check_issue(issue: RedmineIssue, build: int):
     if not issue.team == supported_team:
         issue.add_error(f"team is not {supported_team}")
     if not issue.build == build:
@@ -73,10 +73,10 @@ def main():
 
     parser.add_argument("--key", type=str, required=True, help="Redmine authentication key")
 
-    parser.add_argument("--id", type=str, required=True, help="ID of the issue to check")
+    parser.add_argument("--id", type=int, required=True, help="ID of the issue to check")
 
     # Optional
-    parser.add_argument("--build", type=str, help="Restrict to a given build")
+    parser.add_argument("--build", type=int, help="Restrict to a given build")
     parser.add_argument("--email", type=str, help="Set this email to use Entrez and check the INSDC records")
     args = parser.parse_args()
 
