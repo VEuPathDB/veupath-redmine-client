@@ -139,10 +139,10 @@ def main():
 
     if args.get_missed in ("assignee", "all"):
         if not args.user_id:
-            print("User id required for missed assignee")
-            return
-        issues = get_missed_assignee(redmine, args.user_id)
-        IssueUtils.print_issues(issues, "missed assignee")
+            print("User ID required for 'missed assignee'")
+        else:
+            issues = get_missed_assignee(redmine, args.user_id)
+            IssueUtils.print_issues(issues, "missed assignee")
 
 
 if __name__ == "__main__":
