@@ -30,6 +30,21 @@ supported_team = "Data Processing (EBI)"
 supported_status_id = 20
 
 
+def get_missed_tracker(redmine: VeupathRedmineClient) -> list:
+    """Get issues assigned to right team, but not with the right tracker"""
+
+    redmine.add_filter("team", supported_team)
+    all_issues = redmine.get_issues()
+
+    missed = []
+    for issue in all_issues:
+        if issue.tracker["name"] != "Dataset":
+            missed.append(issue)
+
+    redmine.remove_filter("team")
+    return missed
+
+
 def get_missed_datasets(redmine: VeupathRedmineClient) -> list:
     """Get issues assigned to the team, but not for a supported dataset"""
 
@@ -94,7 +109,7 @@ def main():
     # Choice
     parser.add_argument(
         "--get_missed",
-        choices=["datasets", "status", "assignee", "all"],
+        choices=["tracker", "datasets", "status", "assignee", "all"],
         required=True,
         help="Check which category of issues were missed",
     )
@@ -110,33 +125,24 @@ def main():
     if args.build:
         redmine.set_build(args.build)
 
-    if args.get_missed == "datasets":
+    if args.get_missed in ("tracker", "all"):
+        issues = get_missed_tracker(redmine)
+        IssueUtils.print_issues(issues, "missed tracker")
+
+    if args.get_missed in ("datasets", "all"):
         issues = get_missed_datasets(redmine)
         IssueUtils.print_issues(issues, "missed datasets")
 
-    elif args.get_missed == "status":
+    if args.get_missed in ("status", "all"):
         issues = get_missed_status(redmine)
         IssueUtils.print_issues(issues, "missed status")
 
-    elif args.get_missed == "assignee":
+    if args.get_missed in ("assignee", "all"):
         if not args.user_id:
             print("User id required for missed assignee")
             return
         issues = get_missed_assignee(redmine, args.user_id)
         IssueUtils.print_issues(issues, "missed assignee")
-
-    elif args.get_missed == "all":
-        issues_ds = get_missed_datasets(redmine)
-        IssueUtils.print_issues(issues_ds, "missed datasets")
-
-        issues_st = get_missed_status(redmine)
-        IssueUtils.print_issues(issues_st, "missed status")
-
-        if not args.user_id:
-            print("User id required for missed assignee")
-            return
-        issues_user = get_missed_assignee(redmine, args.user_id)
-        IssueUtils.print_issues(issues_user, "missed assignee")
 
 
 if __name__ == "__main__":
