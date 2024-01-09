@@ -178,7 +178,7 @@ class Genome(RedmineIssue):
                 self.add_error(f"Accession {accession} is a RefSeq accession, not INSDC")
             elif version is None or not version.isdigit():
                 self.add_error(f"Accession {full_accession} doesn't have a version number")
-            return accession
+            return full_accession
         return ""
 
     def _get_insdc_accession(self) -> None:
