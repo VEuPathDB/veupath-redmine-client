@@ -68,7 +68,10 @@ def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -
         # Create new organism abbrev if necessary
         if not genome.organism_abbrev:
             exp_organism = genome.experimental_organism
-            new_org = OrgsUtils.generate_abbrev(exp_organism)
+            try:
+                new_org = OrgsUtils.generate_abbrev(exp_organism)
+            except InvalidOrganism as exc:
+                raise ValueError(f"Issue {issue.issue.id} raised an error") from exc
             genome.organism_abbrev = new_org
             new_abbrev = True
 
