@@ -139,6 +139,7 @@ class Genome(RedmineIssue):
 
         self._get_insdc_accession()
         self._get_insdc_metadata()
+        self._check_refseq()
         self._check_datatype()
         self._check_latest()
 
@@ -274,3 +275,18 @@ class Genome(RedmineIssue):
             self.add_error("Got a gff but not expected to be annotated")
         if not (has_gff or is_annotated) and self.annotated:
             self.add_error("Got no gff but expected to be annotated")
+
+    def _check_refseq(self) -> None:
+        """
+        Check if the RefSeq assembly has been suppressed and why.
+        """
+        if not self.insdc_metadata:
+            return
+
+        if self.accession.startswith("GCF"):
+            try:
+                suppressed_reason = self.insdc_metadata["ExclFromRefSeq"]
+            except KeyError:
+                return
+            if suppressed_reason:
+                self.add_error(f"Suppressed ({', '.join(suppressed_reason)})")
