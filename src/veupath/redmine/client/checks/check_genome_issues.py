@@ -104,7 +104,7 @@ def check_genome_issues(genomes) -> None:
             print(genome.short_str())
 
 
-def report_genome_issues(genomes, report: str) -> None:
+def report_genome_issues(genomes, report: str, ensembl_version: int = 0) -> None:
     categories = categorize_genome_issues(genomes)
     all_genomes: List[Genome] = categories["valid"]
 
@@ -167,6 +167,9 @@ def report_genome_issues(genomes, report: str) -> None:
                 f"<li>{operations}: {genome.component} {genome.organism_abbrev} ({genome.redmine_link()})</li>"
             )
         lines.append("</ul>")
+    
+    if ensembl_version:
+        lines.append(f"<p>Ensembl API version: {ensembl_version}</p>")
 
     for comp in comp_order:
         comp_issues: List[Genome] = components[comp]
@@ -254,6 +257,7 @@ def main():
     parser.add_argument("--store", type=str, help="Write json files for each Redmine issue")
 
     # Optional
+    parser.add_argument("--ensembl_version", type=int, help="Provide Ensembl API version (for the report")
     parser.add_argument("--build", type=int, help="Restrict to a given build")
     parser.add_argument("--component", type=str, help="Restrict to a given component")
     parser.add_argument(
@@ -280,7 +284,7 @@ def main():
     elif args.check:
         check_genome_issues(issues)
     elif args.report:
-        report_genome_issues(issues, args.report)
+        report_genome_issues(issues, args.report, ensembl_version=args.ensembl_version)
     elif args.store:
         store_genome_issues(issues, args.store)
 
