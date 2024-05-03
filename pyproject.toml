@@ -50,6 +50,7 @@ dependencies = [
 dev = [
     "black",
     "mypy",
+    "pylint",
 ]
 
 [project.urls]
