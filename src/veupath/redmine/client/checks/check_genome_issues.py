@@ -257,7 +257,7 @@ def main():
     parser.add_argument("--store", type=str, help="Write json files for each Redmine issue")
 
     # Optional
-    parser.add_argument("--ensembl_version", type=int, help="Provide Ensembl API version (for the report")
+    parser.add_argument("--ensembl_version", type=int, help="Provide Ensembl API version (for the report)")
     parser.add_argument("--build", type=int, help="Restrict to a given build")
     parser.add_argument("--component", type=str, help="Restrict to a given component")
     parser.add_argument(
