@@ -45,7 +45,9 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     return genomes
 
 
-def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, None] = None) -> Dict[str, List[Genome]]:
+def categorize_abbrevs(
+    issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, None] = None
+) -> Dict[str, List[Genome]]:
     cur_abbrevs = OrgsUtils.load_abbrevs(cur_abbrevs_path)
     category: Dict[str, List[Genome]] = {
         "set_new": [],
@@ -141,7 +143,9 @@ def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, 
             print("\t".join(line))
 
 
-def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, None]) -> None:
+def update_abbrevs(
+    redmine: VeupathRedmineClient, issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, None]
+) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
     to_name = categories["to_update"]
     print(f"\n{len(to_name)} new organism abbrevs to update:")

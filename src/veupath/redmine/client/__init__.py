@@ -14,13 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 
 from redminelib import Redmine
 
 from veupath.redmine.client.redmine_issue import RedmineIssue
 from .veupath_params import VeupathParams
 from .issue_utils import IssueUtils
-import argparse
 
 
 __version__ = "0.1.0"
@@ -29,7 +29,7 @@ __version__ = "0.1.0"
 class RedmineFilter:
     """Simple object to store a list of filters to use for Redmine filtering"""
 
-    """This is to map simple key names to actual Redmine field names"""
+    # This is to map simple key names to actual Redmine field names
     field_map: dict = {}
 
     def __init__(self) -> None:
@@ -72,8 +72,7 @@ class RedmineClient:
 
     def get_custom_fields(self):
         rs_fields = self.redmine.custom_field.all()
-        for rs_field in rs_fields:
-            yield rs_field
+        yield from rs_fields
 
     def add_filter(self, field_name, field_value) -> None:
         self.filter.set_field(field_name, field_value)
@@ -113,11 +112,8 @@ class RedmineClient:
             if not feedback:
                 print(f"Failed to update {field_name} with value {field_value} in {issue.issue.id}")
                 return False
-            else:
-                return True
-        else:
-            raise Exception(f"Can't find custom field named {field_name}")
-        return False
+            return True
+        raise ValueError(f"Can't find custom field named {field_name}")
 
 
 class VeupathRedmineClient(RedmineClient):

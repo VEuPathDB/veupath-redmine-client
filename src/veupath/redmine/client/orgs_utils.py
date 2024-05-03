@@ -30,6 +30,7 @@ from typing import Set, Union
 
 class InvalidOrganism(Exception):
     """Raised for invalid organism name."""
+
     def __init__(self, org, added_message="") -> None:
         message = f"Invalid organism name: '{org}'"
         if added_message:
@@ -39,6 +40,7 @@ class InvalidOrganism(Exception):
 
 class InvalidAbbrev(Exception):
     """Raised for invalid organism abbreviation."""
+
     def __init__(self, abbrev, added_message="") -> None:
         message = f"Invalid organism abbrev: '{abbrev}'"
         if added_message:
@@ -48,6 +50,7 @@ class InvalidAbbrev(Exception):
 
 class OrgsUtils:
     """Collection of methods to check organism names and abbreviations."""
+
     abbrev_format = r"^([a-z]{4}|[a-z]sp)[A-z0-9_.-]+$"
 
     @staticmethod
@@ -59,7 +62,7 @@ class OrgsUtils:
     @staticmethod
     def generate_abbrev(name) -> str:
         """Generates an organism abbrev from a full scientific name.
-        
+
         Raises InvalidOrganism if the input name is incorrect."""
         name = name.strip()
         if name == "":

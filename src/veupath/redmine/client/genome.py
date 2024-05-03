@@ -41,13 +41,10 @@ class Genome(RedmineIssue):
         self.is_replacement = False
         self.accession = ""
         self.annotated = self._is_annotated()
-        self.insdc_metadata = dict()
+        self.insdc_metadata = {}
 
     def _is_annotated(self) -> bool:
-        if self.datatype == "Genome sequence and Annotation":
-            return True
-        else:
-            return False
+        return self.datatype == "Genome sequence and Annotation"
 
     def to_json_struct(self) -> Dict[str, Any]:
         data = {
@@ -127,8 +124,7 @@ class Genome(RedmineIssue):
         if "Patch build" in self.operations:
             self.is_replacement = True
             return
-        else:
-            self.parse_genome()
+        self.parse_genome()
 
     def parse_genome(self) -> None:
         """
@@ -220,7 +216,7 @@ class Genome(RedmineIssue):
         if self.insdc_metadata:
             return self.insdc_metadata
 
-        summary: Dict[str, Any] = dict()
+        summary: Dict[str, Any] = {}
         if Entrez.email and self.accession:
             handle = Entrez.esearch(db="assembly", term=self.accession, retmax="5")
             try:
@@ -252,10 +248,9 @@ class Genome(RedmineIssue):
         properties = self.insdc_metadata["PropertyList"]
         if self.accession.startswith("GCA") and "has_annotation" in properties:
             return True
-        elif self.accession.startswith("GCF") and "refseq_has_annotation" in properties:
+        if self.accession.startswith("GCF") and "refseq_has_annotation" in properties:
             return True
-        else:
-            return False
+        return False
 
     def _check_datatype(self) -> None:
         """

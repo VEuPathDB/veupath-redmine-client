@@ -94,9 +94,8 @@ def categorize_datasets(datasets: List[RNAseq]) -> Dict[str, List[RNAseq]]:
 
 def check_datasets(datasets) -> None:
     categories = categorize_datasets(datasets)
-    for key in categories:
-        print(f"\n{len(categories[key])} {key}:")
-        genomes = categories[key]
+    for key, genomes in categories.items():
+        print(f"\n{len(genomes)} {key}:")
         for genome in genomes:
             print(genome.short_str())
 
@@ -203,45 +202,44 @@ def store_issues(issues, output_dir: Path) -> None:
     if not all_datasets:
         print("No valid dataset to report")
         return
-    else:
-        cur_datasets_structs = []
-        new_datasets_structs = []
-        for dataset in all_datasets:
-            sub_dir = "cur_genome"
-            if dataset.is_ref_change or "Patch build" in dataset.operations:
-                continue
-            elif "Other" in dataset.operations:
-                sub_dir = "other"
-            elif dataset.new_genome:
-                print(f"Dataset is for new genome {dataset.issue.id}")
-                sub_dir = "new_genome"
+    cur_datasets_structs = []
+    new_datasets_structs = []
+    for dataset in all_datasets:
+        sub_dir = "cur_genome"
+        if dataset.is_ref_change or "Patch build" in dataset.operations:
+            continue
+        if "Other" in dataset.operations:
+            sub_dir = "other"
+        elif dataset.new_genome:
+            print(f"Dataset is for new genome {dataset.issue.id}")
+            sub_dir = "new_genome"
 
-            add_no_spliced(dataset)
-            component = dataset.component
-            comp_dir = Path(output_dir) / sub_dir / component
-            try:
-                comp_dir.mkdir(parents=True)
-            except FileExistsError:
-                pass
+        add_no_spliced(dataset)
+        component = dataset.component
+        comp_dir = Path(output_dir) / sub_dir / component
+        try:
+            comp_dir.mkdir(parents=True)
+        except FileExistsError:
+            pass
 
-            dataset_name = f"{dataset.organism_abbrev}_{dataset.dataset_name}"
-            organism_file = comp_dir / f"{dataset_name}.json"
-            with organism_file.open("w") as f:
-                dataset_struct = dataset.to_json_struct()
-                if dataset.new_genome:
-                    new_datasets_structs.append(dataset_struct)
-                elif "Other" not in dataset.operations and "Patch build" not in dataset.operations:
-                    cur_datasets_structs.append(dataset_struct)
-                json.dump([dataset_struct], f, indent=True, sort_keys=True)
+        dataset_name = f"{dataset.organism_abbrev}_{dataset.dataset_name}"
+        organism_file = comp_dir / f"{dataset_name}.json"
+        with organism_file.open("w") as f:
+            dataset_struct = dataset.to_json_struct()
+            if dataset.new_genome:
+                new_datasets_structs.append(dataset_struct)
+            elif "Other" not in dataset.operations and "Patch build" not in dataset.operations:
+                cur_datasets_structs.append(dataset_struct)
+            json.dump([dataset_struct], f, indent=True, sort_keys=True)
 
-        cur_structs_file = output_dir / "all_cur.json"
-        with cur_structs_file.open("w") as f:
-            json.dump(cur_datasets_structs, f, indent=True, sort_keys=True)
+    cur_structs_file = output_dir / "all_cur.json"
+    with cur_structs_file.open("w") as f:
+        json.dump(cur_datasets_structs, f, indent=True, sort_keys=True)
 
-        if new_datasets_structs:
-            new_structs_file = output_dir / "all_new.json"
-            with new_structs_file.open("w") as f:
-                json.dump(new_datasets_structs, f, indent=True, sort_keys=True)
+    if new_datasets_structs:
+        new_structs_file = output_dir / "all_new.json"
+        with new_structs_file.open("w") as f:
+            json.dump(new_datasets_structs, f, indent=True, sort_keys=True)
 
 
 def filter_valid_status(datasets: List[RNAseq], valid_status) -> List:

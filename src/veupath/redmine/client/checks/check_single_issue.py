@@ -52,10 +52,12 @@ def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: str)
     warnings = redmine_issue.warnings
     if errors:
         print(f"This issue has {len(errors)} errors:")
-        [print(f"- {error}") for error in errors]
+        for error in errors:
+            print(f"- {error}")
     if warnings:
         print(f"This issue has {len(warnings)} warnings:")
-        [print(f"- {warning}") for warning in warnings]
+        for warning in warnings:
+            print(f"- {warning}")
     if not (errors or warnings):
         print("No error found")
 

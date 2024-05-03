@@ -15,11 +15,11 @@
 # limitations under the License.
 
 import re
-from cmath import exp
 from typing import List
+
 from .issue_utils import IssueUtils
 from .orgs_utils import InvalidAbbrev, OrgsUtils
-from veupath.redmine.client.veupath_params import VeupathParams
+from .veupath_params import VeupathParams
 
 
 class DatatypeException(Exception):

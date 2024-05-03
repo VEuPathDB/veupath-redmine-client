@@ -15,8 +15,10 @@
 # limitations under the License.
 
 import re
-from unidecode import unidecode
 from typing import Any, Dict, List
+
+from unidecode import unidecode
+
 from .issue_utils import IssueUtils
 from .redmine_issue import RedmineIssue, DatatypeException
 
@@ -187,8 +189,8 @@ class RNAseq(RedmineIssue):
         lines = sample_str.split("\n")
 
         try:
-            sample_names = dict()
-            accessions_count: dict = dict()
+            sample_names = {}
+            accessions_count: dict = {}
             sample_errors = []
             for line in lines:
                 line = line.strip()
@@ -208,8 +210,7 @@ class RNAseq(RedmineIssue):
                     if sample_name in sample_names:
                         sample_errors.append(f"repeated name {sample_name}")
                         continue
-                    else:
-                        sample_names[sample_name] = True
+                    sample_names[sample_name] = True
 
                     accessions_str = parts[1].strip()
                     accessions = [x.strip() for x in accessions_str.split(",")]
@@ -218,9 +219,8 @@ class RNAseq(RedmineIssue):
                         if self._validate_accessions(sample_name.split(",")):
                             sample_errors.append(f"name and accession switched? ({line})")
                             continue
-                        else:
-                            sample_errors.append(f"Invalid accession in '{accessions}' ({line})")
-                            continue
+                        sample_errors.append(f"Invalid accession in '{accessions}' ({line})")
+                        continue
 
                     # Check uniqueness of SRA ids within this dataset
                     for accession in accessions:
@@ -289,7 +289,7 @@ class RNAseq(RedmineIssue):
         name = re.sub(r"%", "pc_", name)
         name = re.sub(r"_+", "_", name)
         if re.search(NON_ASCII, name):
-            print("WARNING: name contains special characters: %s (%s)" % (old_name, name))
+            print(f"WARNING: name contains special characters: {old_name} ({name})")
             name = ""
 
         return name

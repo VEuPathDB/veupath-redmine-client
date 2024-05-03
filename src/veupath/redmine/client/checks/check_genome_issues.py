@@ -91,16 +91,15 @@ def categorize_genome_issues(genomes) -> Dict[str, List[Genome]]:
 
 def summarize_genome_issues(genomes) -> None:
     categories = categorize_genome_issues(genomes)
-    for key in categories:
-        print(f"{len(categories[key])} {key}")
+    for key, cat_genomes in categories.items():
+        print(f"{len(cat_genomes)} {key}")
 
 
 def check_genome_issues(genomes) -> None:
     categories = categorize_genome_issues(genomes)
-    for key in categories:
-        print(f"\n{len(categories[key])} {key}:")
-        genomes = categories[key]
-        for genome in genomes:
+    for key, cat_genomes in categories.items():
+        print(f"\n{len(cat_genomes)} {key}:")
+        for genome in cat_genomes:
             print(genome.short_str())
 
 
@@ -164,10 +163,11 @@ def report_genome_issues(genomes, report: str, ensembl_version: int = 0) -> None
         for genome in others:
             operations = ", ".join(genome.operations)
             lines.append(
-                f"<li>{operations}: {genome.component} {genome.organism_abbrev} ({genome.redmine_link()})</li>"
+                f"<li>{operations}: {genome.component} {genome.organism_abbrev} "
+                f"({genome.redmine_link()})</li>"
             )
         lines.append("</ul>")
-    
+
     if ensembl_version:
         lines.append(f"<p>Ensembl API version: {ensembl_version}</p>")
 
@@ -224,10 +224,7 @@ def store_genome_issues(issues, output_dir) -> None:
             continue
 
         if genomes:
-            if group in group_names:
-                group_name = group_names[group]
-            else:
-                group_name = group.replace(" ", "_").lower()
+            group_name = group_names.get(group, group.replace(" ", "_").lower())
             group_dir = os.path.join(output_dir, group_name)
             try:
                 os.makedirs(group_dir)
