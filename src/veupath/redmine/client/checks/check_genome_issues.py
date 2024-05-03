@@ -21,8 +21,8 @@ from typing import Dict, List
 
 from Bio import Entrez
 
-from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.genome import Genome
+from .. import VeupathRedmineClient
+from ..genome import Genome
 
 
 def get_genome_issues(redmine: VeupathRedmineClient) -> list:

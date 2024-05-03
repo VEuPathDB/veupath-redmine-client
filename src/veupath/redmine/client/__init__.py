@@ -111,7 +111,7 @@ class RedmineClient:
                 issue.issue.id, custom_fields=[{"id": field_id, "value": field_value}]
             )
             if not feedback:
-                print(f"Failed to update {field_name} with value {field_value} in {issue.id}")
+                print(f"Failed to update {field_name} with value {field_value} in {issue.issue.id}")
                 return False
             else:
                 return True

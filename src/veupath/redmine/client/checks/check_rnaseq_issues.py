@@ -19,9 +19,9 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
-from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.rnaseq import RNAseq
-from veupath.redmine.client.orgs_utils import OrgsUtils
+from .. import VeupathRedmineClient
+from ..rnaseq import RNAseq
+from ..orgs_utils import OrgsUtils
 
 
 supported_team = "Data Processing (EBI)"

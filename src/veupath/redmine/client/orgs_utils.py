@@ -15,8 +15,10 @@
 # limitations under the License.
 
 
+from os import PathLike
+from pathlib import Path
 import re
-from typing import Set
+from typing import Set, Union
 
 
 class InvalidOrganism(Exception):
@@ -77,12 +79,12 @@ class OrgsUtils:
         return organism_abbrev
 
     @staticmethod
-    def load_abbrevs(abbrev_path: str) -> Set[str]:
+    def load_abbrevs(abbrev_path: Union[PathLike, None] = None) -> Set[str]:
         if not abbrev_path:
             return set()
 
         abbrevs_list = []
-        with open(abbrev_path, "r") as abbrev_file:
+        with Path(abbrev_path).open("r") as abbrev_file:
             for line in abbrev_file:
                 if re.search("\t| ", line):
                     raise ValueError("Abbreviation file contains spaces or columns")

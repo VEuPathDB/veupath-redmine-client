@@ -18,16 +18,16 @@ import argparse
 
 from Bio import Entrez
 
-from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.genome import Genome
-from veupath.redmine.client.rnaseq import RNAseq
-from veupath.redmine.client.redmine_issue import RedmineIssue
+from .. import VeupathRedmineClient
+from ..genome import Genome
+from ..rnaseq import RNAseq
+from ..redmine_issue import RedmineIssue
 
 
 supported_team = "Data Processing (EBI)"
 
 
-def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: int) -> list:
+def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: str) -> None:
     """Check a single issue given an ID"""
 
     issue = redmine.get_issue(issue_id)

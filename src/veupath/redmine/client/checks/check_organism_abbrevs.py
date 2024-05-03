@@ -15,12 +15,13 @@
 # limitations under the License.
 
 import argparse
-from typing import Dict, List
+from os import PathLike
+from typing import Dict, List, Union
 
-from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.genome import Genome
-from veupath.redmine.client.redmine_issue import RedmineIssue
-from veupath.redmine.client.orgs_utils import InvalidAbbrev, InvalidOrganism, OrgsUtils
+from .. import VeupathRedmineClient
+from ..genome import Genome
+from ..redmine_issue import RedmineIssue
+from ..orgs_utils import InvalidAbbrev, InvalidOrganism, OrgsUtils
 
 
 supported_team = "Data Processing (EBI)"
@@ -44,7 +45,7 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
     return genomes
 
 
-def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -> Dict[str, List[Genome]]:
+def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, None] = None) -> Dict[str, List[Genome]]:
     cur_abbrevs = OrgsUtils.load_abbrevs(cur_abbrevs_path)
     category: Dict[str, List[Genome]] = {
         "set_new": [],
@@ -117,7 +118,7 @@ def categorize_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str = "") -
     return category
 
 
-def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
+def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, None] = None) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
 
     for cat in (
@@ -140,7 +141,7 @@ def check_abbrevs(issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
             print("\t".join(line))
 
 
-def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue], cur_abbrevs_path: str) -> None:
+def update_abbrevs(redmine: VeupathRedmineClient, issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, None]) -> None:
     categories = categorize_abbrevs(issues, cur_abbrevs_path)
     to_name = categories["to_update"]
     print(f"\n{len(to_name)} new organism abbrevs to update:")

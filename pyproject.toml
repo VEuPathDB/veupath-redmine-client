@@ -49,6 +49,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black",
+    "mypy",
 ]
 
 [project.urls]
@@ -102,3 +103,10 @@ disable = [
     "wildcard-import",
 ]
 max-attributes = 12
+
+[tool.mypy]
+mypy_path = "src"
+explicit_package_bases = true
+ignore_missing_imports = true
+show_error_codes = true
+warn_unused_configs = true

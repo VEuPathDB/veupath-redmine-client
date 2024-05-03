@@ -16,8 +16,8 @@
 
 import argparse
 
-from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.issue_utils import IssueUtils
+from .. import VeupathRedmineClient
+from ..issue_utils import IssueUtils
 
 
 supported_datatypes = (
