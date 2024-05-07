@@ -13,9 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""VeupathDB Redmine server parameters in one object."""
 
 
 class VeupathParams:
+    """Store basic parameters for the VeupathDB Redmine server."""
+
     redmine_url = "https://redmine.apidb.org"
     project_id = 1976
     issues_fields = {

@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Redmine issue object for RNA-Seq datatype."""
 
 import re
 from typing import Any, Dict
@@ -44,9 +45,11 @@ class Genome(RedmineIssue):
         self.insdc_metadata = {}
 
     def _is_annotated(self) -> bool:
+        """Returns whether the genome from the issue is expected to be annotated."""
         return self.datatype == "Genome sequence and Annotation"
 
     def to_json_struct(self) -> Dict[str, Any]:
+        """Returns a structure representation of the genome data of the issue following the json schema."""
         data = {
             "BRC4": {
                 "component": self.component,
@@ -68,6 +71,7 @@ class Genome(RedmineIssue):
         return line
 
     def short_str(self) -> str:
+        """Returns a short representation of the genome issue."""
         # status
         if self.errors:
             status = "BAD"
@@ -112,10 +116,7 @@ class Genome(RedmineIssue):
         return line
 
     def parse(self) -> None:
-        """
-        Given a Veupath Redmine genome issue, extracts relevant data
-        """
-
+        """Extract and store the relevant data from a genome issue."""
         # First, check the datatype
         if self.custom["DataType"] not in self.supported_datatypes:
             raise DatatypeException(f"Datatype not supported: '{self.custom['DataType']}'")
@@ -124,12 +125,7 @@ class Genome(RedmineIssue):
         if "Patch build" in self.operations:
             self.is_replacement = True
             return
-        self.parse_genome()
 
-    def parse_genome(self) -> None:
-        """
-        Extract genome metadata from a Redmine issue
-        """
         self._get_replacement()
         self._get_gff()
 
@@ -140,6 +136,7 @@ class Genome(RedmineIssue):
         self._check_latest()
 
     def _check_latest(self) -> None:
+        """Store a warning if the accession is not the latest (store any anomaly too)."""
         summary = self.insdc_metadata
 
         latest_accession = summary.get("LatestAccession")
@@ -179,6 +176,7 @@ class Genome(RedmineIssue):
         return ""
 
     def _get_insdc_accession(self) -> None:
+        """Store the INSDC accession, store a warning if the accession is missing or wrong."""
         exclude_operations = {"Load from INSDC", "Load from RefSeq", "Load from EnsEMBL"}
         if not exclude_operations.intersection(self.operations) and self.is_replacement:
             return
@@ -195,6 +193,7 @@ class Genome(RedmineIssue):
             self.accession = accession
 
     def _get_gff(self) -> None:
+        """Store the GFF 2 Load path if any."""
         try:
             gff_path = self.custom["GFF 2 Load"]
         except KeyError:
@@ -204,6 +203,7 @@ class Genome(RedmineIssue):
             self.gff = gff_path
 
     def _get_replacement(self) -> None:
+        """Set `is_replacement` to true if the genome is expected to be a replacement."""
         try:
             replace = self.custom["Replacement genome?"]
         except KeyError:
@@ -213,6 +213,7 @@ class Genome(RedmineIssue):
             self.is_replacement = True
 
     def _get_insdc_metadata(self) -> Dict[str, Any]:
+        """Returns the INSDC metadata from Entrez. Store errors if unable to get it."""
         if self.insdc_metadata:
             return self.insdc_metadata
 
@@ -239,12 +240,14 @@ class Genome(RedmineIssue):
                         break
         return summary
 
-    def get_assembly_metadata(self, accession):
+    def get_assembly_metadata(self, accession: str):
+        """Returns a metadata summary from entrez for the provided accession."""
         esummary_handle = Entrez.esummary(db="assembly", id=accession, report="full")
         esummary_record = Entrez.read(esummary_handle, validate=False)
         return esummary_record
 
     def assembly_is_annotated(self) -> bool:
+        """ "Returns whether the genome from INSDC is annotated."""
         properties = self.insdc_metadata["PropertyList"]
         if self.accession.startswith("GCA") and "has_annotation" in properties:
             return True
@@ -253,9 +256,7 @@ class Genome(RedmineIssue):
         return False
 
     def _check_datatype(self) -> None:
-        """
-        Check if we expect an annotation with a gff from INSDC/GFF2Load
-        """
+        """Checks if we expect an annotation with a gff from INSDC/GFF2Load."""
         if not self.insdc_metadata:
             return
         if "Load from EnsEMBL" in self.operations:
@@ -272,9 +273,7 @@ class Genome(RedmineIssue):
             self.add_error("Got no gff but expected to be annotated")
 
     def _check_refseq(self) -> None:
-        """
-        Check if the RefSeq assembly has been suppressed and why.
-        """
+        """Checks if the RefSeq assembly has been suppressed and why."""
         if not self.insdc_metadata:
             return
 

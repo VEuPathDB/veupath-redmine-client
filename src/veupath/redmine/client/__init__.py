@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Retrieve metadata from Redmine."""
 
 import argparse
 
@@ -36,6 +37,7 @@ class RedmineFilter:
         self.fields: dict = {}
 
     def _map_key(self, name: str) -> str:
+        """Helper to map the given filter name to the one from the field map."""
         key: str
         if name in self.field_map:
             key = self.field_map[name]
@@ -44,10 +46,12 @@ class RedmineFilter:
         return key
 
     def set_field(self, field_name, field_value):
+        """Set a field value."""
         key = self._map_key(field_name)
         self.fields[key] = field_value
 
     def unset_field(self, field_name):
+        """Delete a field value."""
         key = self._map_key(field_name)
         del self.fields[key]
 
@@ -71,37 +75,35 @@ class RedmineClient:
         self.project_id = project_id
 
     def get_custom_fields(self):
+        """Gets the list of custom fields from the Redmine instance."""
         rs_fields = self.redmine.custom_field.all()
         yield from rs_fields
 
     def add_filter(self, field_name, field_value) -> None:
+        """Adds a filter (key and value) for the search."""
         self.filter.set_field(field_name, field_value)
 
     def add_filters(self, fields: dict) -> None:
+        """Adds a dictionary of filters (keys and values) for the search."""
         for field_name, field_value in fields:
             self.add_filter(field_name, field_value)
 
     def remove_filter(self, field_name) -> None:
+        """Removes a filter for the search."""
         self.filter.unset_field(field_name)
 
     def get_issues(self):
-        """
-        Get issues from Redmine using the defined filter
-        Return a list of issues
-        """
-
+        """Returns a list of issues from Redmine using the defined filter."""
         search_fields = self.filter.fields
         return list(self.redmine.issue.filter(**search_fields))
 
     def get_issue(self, issue_id: int):
-        """
-        Get one issue from Redmine
-        """
-
+        """Gets one issue from Redmine."""
         issue = self.redmine.issue.get(issue_id)
         return issue
 
     def update_custom_value(self, issue: RedmineIssue, field_name: str, field_value: str) -> bool:
+        """Update one custom field value in the Redmine issue provided."""
         custom = IssueUtils.get_custom_ids(issue.issue)
 
         if field_name in custom:
@@ -126,6 +128,7 @@ class VeupathRedmineClient(RedmineClient):
         self.filter = VeupathRedmineFilter()
 
     def set_build(self, build: int) -> None:
+        """Adds a build as filter for the search."""
         redmine = self.redmine
         versions = redmine.version.filter(project_id=self.project_id)
         version_name = "Build " + str(build)
@@ -133,15 +136,18 @@ class VeupathRedmineClient(RedmineClient):
         self.add_filter("build", version_id)
 
     def set_organism(self, organism: int) -> None:
+        """Adds an organism abbreviation as filter for the search."""
         self.add_filter("organism_abbrev", organism)
 
     def set_component(self, component: int) -> None:
+        """Adds a component DB as filter for the search."""
         self.add_filter("component", component)
 
 
 def main():
+    """Main entrypoint."""
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Retrieve metadata from Redmine")
+    parser = argparse.ArgumentParser(description=__doc__)
 
     parser.add_argument("--key", type=str, required=True, help="Redmine authentification key")
     # Optional

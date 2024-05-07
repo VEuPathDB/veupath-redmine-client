@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Redmine issue object for RNA-Seq datatype."""
 
 import re
 from typing import Any, Dict, List
@@ -27,7 +28,7 @@ NON_ASCII = r"[^A-Za-z0-9_.-]"
 
 
 class SamplesParsingException(Exception):
-    pass
+    """Raised when an error happens when parsing an RNA-Seq issue."""
 
 
 class RNAseq(RedmineIssue):
@@ -52,6 +53,7 @@ class RNAseq(RedmineIssue):
                 self.operations.remove(operation)
 
     def to_json_struct(self) -> Dict[str, Any]:
+        """Returns a structure representation of the RNA-Seq data of the issue following the json schema."""
         data: Dict[str, Any] = {
             "component": "",
             "species": "",
@@ -82,6 +84,7 @@ class RNAseq(RedmineIssue):
         return line
 
     def short_str(self) -> str:
+        """Returns a short representation of the RNA-Seq issue."""
         # status
         if self.errors:
             status = "BAD"
@@ -123,35 +126,31 @@ class RNAseq(RedmineIssue):
             subject = subject[0:37] + "..."
 
         # Merge all
-        line = f"{status:3}  {issue.id:6}  {component_str:12}  {organism_str:24}  {dataset_str:24}  {desc:22}  {subject}"
+        line = (
+            f"{status:3}  {issue.id:6}  {component_str:12}  "
+            f"{organism_str:24}  {dataset_str:24}  {desc:22}  {subject}"
+        )
         errors = "\n".join([(" " * 13) + f"ERROR: {error}" for error in self.errors])
         if errors:
             line = f"{line}\n{errors}"
         return line
 
     def parse(self) -> None:
-        """
-        Given a Veupath Redmine RNA-Seq issue, extracts relevant data
-        """
-
+        """Extract and store the relevant data from an RNA-Seq issue."""
         # Check the datatype
         if self.custom["DataType"] not in self.supported_datatypes:
             raise DatatypeException(self.custom["DataType"])
 
         # Next, get the data
-        self.parse_rnaseq()
-
-    def parse_rnaseq(self) -> None:
-        """
-        Extract RNA-Seq metadata from a Redmine issue
-        """
         if self.is_ref_change or "Other" in self.operations or "Patch build" in self.operations:
             self.disable_log()
+
         self._get_dataset_name()
         self._get_samples()
         self.enable_log()
 
     def _get_dataset_name(self) -> None:
+        """Store the dataset name from the issue. Store any error."""
         name = self.custom["Internal dataset name"]
         if name:
             name = name.strip()
@@ -162,6 +161,7 @@ class RNAseq(RedmineIssue):
             self.add_error("Missing dataset name")
 
     def _get_samples(self) -> None:
+        """Store the samples from the issue. Store any error."""
         samples_str = self.custom["Sample Names"]
         if samples_str:
             samples = self._parse_samples(samples_str)
