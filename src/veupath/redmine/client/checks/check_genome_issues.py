@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Check, parse and store genome Redmine issues from VeupathDB."""
 
 import argparse
 import json
@@ -45,6 +46,13 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
 
 
 def categorize_genome_issues(genomes) -> Dict[str, List[Genome]]:
+    """Store the genomes issues in a dict of lists depending on their categorization.
+
+    Categories (might overlap):
+        valid = issues fields are valid
+        invalid = issues have some invalid fields
+        ...
+    """
     validity: Dict[str, List[Genome]] = {
         "valid": [],
         "invalid": [],
@@ -90,12 +98,14 @@ def categorize_genome_issues(genomes) -> Dict[str, List[Genome]]:
 
 
 def summarize_genome_issues(genomes) -> None:
+    """Print the number of issues for each category."""
     categories = categorize_genome_issues(genomes)
     for key, cat_genomes in categories.items():
         print(f"{len(cat_genomes)} {key}")
 
 
 def check_genome_issues(genomes) -> None:
+    """Print the categorization of the list of issues."""
     categories = categorize_genome_issues(genomes)
     for key, cat_genomes in categories.items():
         print(f"\n{len(cat_genomes)} {key}:")
@@ -104,6 +114,7 @@ def check_genome_issues(genomes) -> None:
 
 
 def report_genome_issues(genomes, report: str, ensembl_version: int = 0) -> None:
+    """Write an HTML report for all the valid issues."""
     categories = categorize_genome_issues(genomes)
     all_genomes: List[Genome] = categories["valid"]
 
@@ -202,6 +213,7 @@ def report_genome_issues(genomes, report: str, ensembl_version: int = 0) -> None
 
 
 def store_genome_issues(issues, output_dir) -> None:
+    """Write files (following the genome json schema) for each issue in subfolders for each category."""
     group_names = {
         "Reference change": "reference_change",
         "Load from RefSeq": "new_genomes",
@@ -241,6 +253,7 @@ def store_genome_issues(issues, output_dir) -> None:
 
 
 def main():
+    """Main entrypoint."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="List genome issues from Redmine")
 

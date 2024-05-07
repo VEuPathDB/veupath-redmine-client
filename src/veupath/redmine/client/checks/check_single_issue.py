@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Script to check an issue from its ID."""
 
 import argparse
 
@@ -62,7 +63,8 @@ def check_genome_issue(redmine: VeupathRedmineClient, issue_id: int, build: str)
         print("No error found")
 
 
-def check_issue(issue: RedmineIssue, build: str):
+def check_issue(issue: RedmineIssue, build: str) -> None:
+    """Check the expected team and build, store errors if wrong."""
     if not issue.team == supported_team:
         issue.add_error(f"team is not {supported_team}")
     if not issue.build == build:
@@ -70,6 +72,7 @@ def check_issue(issue: RedmineIssue, build: str):
 
 
 def main():
+    """Main entrypoint."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Check a single issue from Redmine")
 

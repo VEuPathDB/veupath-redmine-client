@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Search for issues that should be assigned to EBI but might be missing some fields."""
 
 import argparse
 
@@ -102,6 +103,7 @@ def get_missed_assignee(redmine, user_id) -> list:
 
 
 def main():
+    """Main entrypoint."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="List missed issues from Redmine")
 
