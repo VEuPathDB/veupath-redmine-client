@@ -13,15 +13,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Check, parse and store RNA-Seq Redmine issues from VEuPathDB."""
 
 import argparse
 import json
 from pathlib import Path
 from typing import Dict, List
 
-from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.rnaseq import RNAseq
-from veupath.redmine.client.orgs_utils import OrgsUtils
+from .. import VeupathRedmineClient
+from ..rnaseq import RNAseq
+from ..orgs_utils import OrgsUtils
 
 
 supported_team = "Data Processing (EBI)"
@@ -58,11 +59,23 @@ def get_rnaseq_issues(redmine: VeupathRedmineClient) -> List[RNAseq]:
 
 
 def add_no_spliced(dataset: RNAseq) -> None:
+    """Set `no_spliced` to True if we should not expect spliced genes for this genome (based on component)."""
     if dataset.component in no_spliced_components:
         dataset.no_spliced = True
 
 
 def categorize_datasets(datasets: List[RNAseq]) -> Dict[str, List[RNAseq]]:
+    """Store the RNA-Seq issues in a dict of lists depending on their categorization.
+
+    Categories (might overlap):
+        valid = issues fields are valid
+        invalid = issues have some invalid fields
+        reference_change = special: all RNA-Seq datasets to be remapped for a reference change
+        patch_build = special: all RNA-Seq dataset to be updated for a patch build
+        new = the datasets are new
+        new_genomes = the genome for the dataset is new
+        other = special: there might be special requests, check the issue description and its comments
+    """
     validity: Dict[str, List[RNAseq]] = {
         "valid": [],
         "invalid": [],
@@ -93,15 +106,16 @@ def categorize_datasets(datasets: List[RNAseq]) -> Dict[str, List[RNAseq]]:
 
 
 def check_datasets(datasets) -> None:
+    """Print the categorization of the list of issues."""
     categories = categorize_datasets(datasets)
-    for key in categories:
-        print(f"\n{len(categories[key])} {key}:")
-        genomes = categories[key]
+    for key, genomes in categories.items():
+        print(f"\n{len(genomes)} {key}:")
         for genome in genomes:
             print(genome.short_str())
 
 
 def report_issues(datasets: List[RNAseq], report: str) -> None:
+    """Write an HTML report for all the valid issues."""
     categories = categorize_datasets(datasets)
     all_datasets: List[RNAseq] = categories["valid"]
     if not all_datasets:
@@ -198,53 +212,54 @@ th {
 
 
 def store_issues(issues, output_dir: Path) -> None:
+    """Write files (following the RNA-Seq json schema) for each issue in subfolders for each category."""
     categories = categorize_datasets(issues)
     all_datasets: List[RNAseq] = categories["valid"]
     if not all_datasets:
         print("No valid dataset to report")
         return
-    else:
-        cur_datasets_structs = []
-        new_datasets_structs = []
-        for dataset in all_datasets:
-            sub_dir = "cur_genome"
-            if dataset.is_ref_change or "Patch build" in dataset.operations:
-                continue
-            elif "Other" in dataset.operations:
-                sub_dir = "other"
-            elif dataset.new_genome:
-                print(f"Dataset is for new genome {dataset.issue.id}")
-                sub_dir = "new_genome"
+    cur_datasets_structs = []
+    new_datasets_structs = []
+    for dataset in all_datasets:
+        sub_dir = "cur_genome"
+        if dataset.is_ref_change or "Patch build" in dataset.operations:
+            continue
+        if "Other" in dataset.operations:
+            sub_dir = "other"
+        elif dataset.new_genome:
+            print(f"Dataset is for new genome {dataset.issue.id}")
+            sub_dir = "new_genome"
 
-            add_no_spliced(dataset)
-            component = dataset.component
-            comp_dir = Path(output_dir) / sub_dir / component
-            try:
-                comp_dir.mkdir(parents=True)
-            except FileExistsError:
-                pass
+        add_no_spliced(dataset)
+        component = dataset.component
+        comp_dir = Path(output_dir) / sub_dir / component
+        try:
+            comp_dir.mkdir(parents=True)
+        except FileExistsError:
+            pass
 
-            dataset_name = f"{dataset.organism_abbrev}_{dataset.dataset_name}"
-            organism_file = comp_dir / f"{dataset_name}.json"
-            with organism_file.open("w") as f:
-                dataset_struct = dataset.to_json_struct()
-                if dataset.new_genome:
-                    new_datasets_structs.append(dataset_struct)
-                elif "Other" not in dataset.operations and "Patch build" not in dataset.operations:
-                    cur_datasets_structs.append(dataset_struct)
-                json.dump([dataset_struct], f, indent=True, sort_keys=True)
+        dataset_name = f"{dataset.organism_abbrev}_{dataset.dataset_name}"
+        organism_file = comp_dir / f"{dataset_name}.json"
+        with organism_file.open("w") as f:
+            dataset_struct = dataset.to_json_struct()
+            if dataset.new_genome:
+                new_datasets_structs.append(dataset_struct)
+            elif "Other" not in dataset.operations and "Patch build" not in dataset.operations:
+                cur_datasets_structs.append(dataset_struct)
+            json.dump([dataset_struct], f, indent=True, sort_keys=True)
 
-        cur_structs_file = output_dir / "all_cur.json"
-        with cur_structs_file.open("w") as f:
-            json.dump(cur_datasets_structs, f, indent=True, sort_keys=True)
+    cur_structs_file = output_dir / "all_cur.json"
+    with cur_structs_file.open("w") as f:
+        json.dump(cur_datasets_structs, f, indent=True, sort_keys=True)
 
-        if new_datasets_structs:
-            new_structs_file = output_dir / "all_new.json"
-            with new_structs_file.open("w") as f:
-                json.dump(new_datasets_structs, f, indent=True, sort_keys=True)
+    if new_datasets_structs:
+        new_structs_file = output_dir / "all_new.json"
+        with new_structs_file.open("w") as f:
+            json.dump(new_datasets_structs, f, indent=True, sort_keys=True)
 
 
 def filter_valid_status(datasets: List[RNAseq], valid_status) -> List:
+    """Returns a list of issues without those whose status is not valid for us to use."""
     valid_datasets = []
     for dataset in datasets:
         if str(dataset.issue.status) in valid_status:
@@ -255,6 +270,7 @@ def filter_valid_status(datasets: List[RNAseq], valid_status) -> List:
 
 
 def add_abbrev_flag(datasets: List[RNAseq], abbrev_file: Path) -> List:
+    """Set `new_genome` to True if the organism abbrev is not in the abbreviations file."""
     cur_abbrevs = OrgsUtils.load_abbrevs(abbrev_file)
 
     for dataset in datasets:
@@ -265,6 +281,7 @@ def add_abbrev_flag(datasets: List[RNAseq], abbrev_file: Path) -> List:
 
 
 def main():
+    """Main entrypoint."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="List RNA-Seq issues from Redmine")
 

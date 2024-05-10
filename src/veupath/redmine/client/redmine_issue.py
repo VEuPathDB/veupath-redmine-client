@@ -13,21 +13,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Generic Redmine issue object and its exceptions."""
 
 import re
-from cmath import exp
 from typing import List
+
 from .issue_utils import IssueUtils
 from .orgs_utils import InvalidAbbrev, OrgsUtils
-from veupath.redmine.client.veupath_params import VeupathParams
+from .veupath_params import VeupathParams
 
 
 class DatatypeException(Exception):
-    pass
+    """Raised when a datatype is wrong."""
 
 
 class MissingDataException(Exception):
-    pass
+    """Raised when some mandatory data is missing from an issue."""
 
 
 class RedmineIssue:
@@ -48,20 +49,25 @@ class RedmineIssue:
         self.team = self._get_team()
 
     def add_error(self, msg: str) -> None:
+        """Store one error message."""
         if self.do_log:
             self.errors.append(msg)
 
     def add_warning(self, msg: str) -> None:
+        """Store one warning message."""
         if self.do_log:
             self.warnings.append(msg)
 
     def disable_log(self) -> None:
+        """Disable log message storage."""
         self.do_log = False
 
     def enable_log(self) -> None:
+        """Activate log message storage."""
         self.do_log = True
 
     def _get_component(self) -> str:
+        """Get the VEuPathDB component DB from the issue."""
         components = []
         try:
             components = self.custom["Component DB"]
@@ -78,6 +84,7 @@ class RedmineIssue:
         return component
 
     def _get_team(self) -> str:
+        """Get the VEuPathDB team from the issue."""
         try:
             team = self.custom["VEuPathDB Team"]
         except KeyError:
@@ -86,6 +93,7 @@ class RedmineIssue:
         return team
 
     def _get_organism_abbrev(self) -> str:
+        """Get the organism abbreviation from the issue."""
         abbrev = ""
         try:
             abbrev = self.custom["Organism Abbreviation"]
@@ -104,6 +112,7 @@ class RedmineIssue:
         return abbrev
 
     def _get_experimental_organism(self) -> str:
+        """Get the experimental organism from the issue."""
         experimental_organism = ""
         try:
             experimental_organism = self.custom["Experimental Organisms"]
@@ -112,22 +121,26 @@ class RedmineIssue:
         return experimental_organism
 
     def _get_datatype(self) -> str:
+        """Get the datatype from the issue."""
         try:
             return self.custom["DataType"]
         except KeyError:
             return ""
 
     def redmine_link(self) -> str:
+        """Create an HTML link string to the Redmine ticket."""
         link = f"{VeupathParams.redmine_url}/issues/{self.issue.id}"
         return f'<a href="{link}">{self.issue.id}</a>'
 
     def _get_operations(self) -> List[str]:
+        """Get the list of EBI operations from the issue."""
         try:
             return self.custom["EBI operations"]
         except KeyError:
             return []
 
     def _get_build(self) -> str:
+        """Get the VEuPathDB build from the issue."""
         try:
             version = self.issue.fixed_version
             match = re.match(r"^Build (\d+)$", str(version))

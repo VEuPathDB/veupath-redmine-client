@@ -13,13 +13,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""A few utils to handle organisms and organism abbreviations."""
+
+__all__ = [
+    "InvalidOrganism",
+    "InvalidAbbrev",
+    "OrgsUtils",
+]
 
 
+from os import PathLike
+from pathlib import Path
 import re
-from typing import Set
+from typing import Set, Union
 
 
 class InvalidOrganism(Exception):
+    """Raised for invalid organism name."""
+
     def __init__(self, org, added_message="") -> None:
         message = f"Invalid organism name: '{org}'"
         if added_message:
@@ -28,6 +39,8 @@ class InvalidOrganism(Exception):
 
 
 class InvalidAbbrev(Exception):
+    """Raised for invalid organism abbreviation."""
+
     def __init__(self, abbrev, added_message="") -> None:
         message = f"Invalid organism abbrev: '{abbrev}'"
         if added_message:
@@ -36,15 +49,21 @@ class InvalidAbbrev(Exception):
 
 
 class OrgsUtils:
+    """Collection of methods to check organism names and abbreviations."""
+
     abbrev_format = r"^([a-z]{4}|[a-z]sp)[A-z0-9_.-]+$"
 
     @staticmethod
     def validate_abbrev(abbrev: str) -> None:
+        """Raises InvalidAbbrev if the abbrev format is not valid."""
         if not re.match(OrgsUtils.abbrev_format, abbrev):
             raise InvalidAbbrev(abbrev, f"does not follow the format '{OrgsUtils.abbrev_format}'")
 
     @staticmethod
     def generate_abbrev(name) -> str:
+        """Generates an organism abbrev from a full scientific name.
+
+        Raises InvalidOrganism if the input name is incorrect."""
         name = name.strip()
         if name == "":
             raise InvalidOrganism(name, "field is empty")
@@ -77,12 +96,17 @@ class OrgsUtils:
         return organism_abbrev
 
     @staticmethod
-    def load_abbrevs(abbrev_path: str) -> Set[str]:
+    def load_abbrevs(abbrev_path: Union[PathLike, None] = None) -> Set[str]:
+        """Returns all abbreviations from a file (one per line, no spaces). Returns empty set if no file.
+
+        Raises:
+            ValueError: raised if the file formatting is incorrect.
+        """
         if not abbrev_path:
             return set()
 
         abbrevs_list = []
-        with open(abbrev_path, "r") as abbrev_file:
+        with Path(abbrev_path).open("r") as abbrev_file:
             for line in abbrev_file:
                 if re.search("\t| ", line):
                     raise ValueError("Abbreviation file contains spaces or columns")

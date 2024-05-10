@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Check, parse and store genome Redmine issues from VEuPathDB."""
 
 import argparse
 import json
@@ -21,8 +22,8 @@ from typing import Dict, List
 
 from Bio import Entrez
 
-from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.genome import Genome
+from .. import VeupathRedmineClient
+from ..genome import Genome
 
 
 def get_genome_issues(redmine: VeupathRedmineClient) -> list:
@@ -45,6 +46,13 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
 
 
 def categorize_genome_issues(genomes) -> Dict[str, List[Genome]]:
+    """Store the genomes issues in a dict of lists depending on their categorization.
+
+    Categories (might overlap):
+        valid = issues fields are valid
+        invalid = issues have some invalid fields
+        ...
+    """
     validity: Dict[str, List[Genome]] = {
         "valid": [],
         "invalid": [],
@@ -90,21 +98,23 @@ def categorize_genome_issues(genomes) -> Dict[str, List[Genome]]:
 
 
 def summarize_genome_issues(genomes) -> None:
+    """Print the number of issues for each category."""
     categories = categorize_genome_issues(genomes)
-    for key in categories:
-        print(f"{len(categories[key])} {key}")
+    for key, cat_genomes in categories.items():
+        print(f"{len(cat_genomes)} {key}")
 
 
 def check_genome_issues(genomes) -> None:
+    """Print the categorization of the list of issues."""
     categories = categorize_genome_issues(genomes)
-    for key in categories:
-        print(f"\n{len(categories[key])} {key}:")
-        genomes = categories[key]
-        for genome in genomes:
+    for key, cat_genomes in categories.items():
+        print(f"\n{len(cat_genomes)} {key}:")
+        for genome in cat_genomes:
             print(genome.short_str())
 
 
 def report_genome_issues(genomes, report: str, ensembl_version: int = 0) -> None:
+    """Write an HTML report for all the valid issues."""
     categories = categorize_genome_issues(genomes)
     all_genomes: List[Genome] = categories["valid"]
 
@@ -164,10 +174,11 @@ def report_genome_issues(genomes, report: str, ensembl_version: int = 0) -> None
         for genome in others:
             operations = ", ".join(genome.operations)
             lines.append(
-                f"<li>{operations}: {genome.component} {genome.organism_abbrev} ({genome.redmine_link()})</li>"
+                f"<li>{operations}: {genome.component} {genome.organism_abbrev} "
+                f"({genome.redmine_link()})</li>"
             )
         lines.append("</ul>")
-    
+
     if ensembl_version:
         lines.append(f"<p>Ensembl API version: {ensembl_version}</p>")
 
@@ -202,6 +213,7 @@ def report_genome_issues(genomes, report: str, ensembl_version: int = 0) -> None
 
 
 def store_genome_issues(issues, output_dir) -> None:
+    """Write files (following the genome json schema) for each issue in subfolders for each category."""
     group_names = {
         "Reference change": "reference_change",
         "Load from RefSeq": "new_genomes",
@@ -224,10 +236,7 @@ def store_genome_issues(issues, output_dir) -> None:
             continue
 
         if genomes:
-            if group in group_names:
-                group_name = group_names[group]
-            else:
-                group_name = group.replace(" ", "_").lower()
+            group_name = group_names.get(group, group.replace(" ", "_").lower())
             group_dir = os.path.join(output_dir, group_name)
             try:
                 os.makedirs(group_dir)
@@ -244,6 +253,7 @@ def store_genome_issues(issues, output_dir) -> None:
 
 
 def main():
+    """Main entrypoint."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="List genome issues from Redmine")
 
@@ -257,7 +267,7 @@ def main():
     parser.add_argument("--store", type=str, help="Write json files for each Redmine issue")
 
     # Optional
-    parser.add_argument("--ensembl_version", type=int, help="Provide Ensembl API version (for the report")
+    parser.add_argument("--ensembl_version", type=int, help="Provide Ensembl API version (for the report)")
     parser.add_argument("--build", type=int, help="Restrict to a given build")
     parser.add_argument("--component", type=str, help="Restrict to a given component")
     parser.add_argument(

@@ -13,11 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Search for issues that should be assigned to EBI but might be missing some fields."""
 
 import argparse
 
-from veupath.redmine.client import VeupathRedmineClient
-from veupath.redmine.client.issue_utils import IssueUtils
+from .. import VeupathRedmineClient
+from ..issue_utils import IssueUtils
 
 
 supported_datatypes = (
@@ -102,6 +103,7 @@ def get_missed_assignee(redmine, user_id) -> list:
 
 
 def main():
+    """Main entrypoint."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="List missed issues from Redmine")
 

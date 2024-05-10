@@ -1,4 +1,3 @@
-#!env python3
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
 #
@@ -13,20 +12,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""VEuPathDB Redmine server parameters in one object."""
-
-
-class VeupathParams:
-    """Store basic parameters for the VEuPathDB Redmine server."""
-
-    redmine_url = "https://redmine.apidb.org"
-    project_id = 1976
-    issues_fields = {
-        "status": "status_name",
-        "build": "fixed_version_id",
-        # Custom fields
-        "team": "cf_17",
-        "datatype": "cf_94",
-        "component": "cf_92",
-        "organism_abbrev": "cf_110",
-    }

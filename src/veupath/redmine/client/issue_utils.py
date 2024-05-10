@@ -13,12 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Helpers to get data from Redmine issues."""
 
 
 from redminelib import exceptions
 
 
 class IssueUtils:
+    """A group of helper functions to get data from Redmine issues."""
+
     max_title = 60
     max_title_full = 100
 
@@ -58,6 +61,7 @@ class IssueUtils:
 
     @staticmethod
     def tostr(issue) -> str:
+        """Returns a string with the ID and title of an issue, truncated if too long."""
         max_title = IssueUtils.max_title
         title = issue.subject
         if len(title) > max_title:
@@ -66,6 +70,10 @@ class IssueUtils:
 
     @staticmethod
     def tostr_full(issue) -> str:
+        """Returns a single line with tab separated value describing the issue.
+
+        List of fields: assignee, team, build, component, datatype, issue ID, (title)"
+        """
         max_title = IssueUtils.max_title_full
         title = issue.subject
         if len(title) > max_title:
@@ -106,6 +114,7 @@ class IssueUtils:
 
     @staticmethod
     def print_issues(issues: list, description: str) -> None:
+        """Print all the issues one-line strings from a list, with the description as the first line."""
         print(f"{len(issues)} issues for {description}")
         for issue in issues:
             print(IssueUtils.tostr_full(issue))
