@@ -228,9 +228,14 @@ class RNAseq(RedmineIssue):
                             accessions_count[accession] += 1
                         else:
                             accessions_count[accession] = 1
-
-                    sample = {"name": self._normalize_name(sample_name), "accessions": accessions}
-                    samples.append(sample)
+                    norm_name = ""
+                    try:
+                        norm_name = self._normalize_name(sample_name)
+                        sample = {"name": norm_name, "accessions": accessions}
+                        samples.append(sample)
+                    except SamplesParsingException as err:
+                        sample_errors.append(f"sample name can't be normalized ({line})")
+                        continue
                 else:
                     sample_errors.append(f"sample line doesn't have 2 parts ({line})")
                     continue
@@ -289,7 +294,7 @@ class RNAseq(RedmineIssue):
         name = re.sub(r"%", "pc_", name)
         name = re.sub(r"_+", "_", name)
         if re.search(NON_ASCII, name):
-            print(f"WARNING: name contains special characters: {old_name} ({name})")
+            raise SamplesParsingException(f"name contains special characters: {old_name} ({name})")
             name = ""
 
         return name
