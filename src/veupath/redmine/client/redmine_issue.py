@@ -67,7 +67,7 @@ class RedmineIssue:
         self.do_log = True
 
     def _get_component(self) -> str:
-        """Get the VeupathDB component DB from the issue."""
+        """Get the VEuPathDB component DB from the issue."""
         components = []
         try:
             components = self.custom["Component DB"]
@@ -84,7 +84,7 @@ class RedmineIssue:
         return component
 
     def _get_team(self) -> str:
-        """Get the VeupathDB team from the issue."""
+        """Get the VEuPathDB team from the issue."""
         try:
             team = self.custom["VEuPathDB Team"]
         except KeyError:
@@ -128,7 +128,7 @@ class RedmineIssue:
             return ""
 
     def redmine_link(self) -> str:
-        """Create an html link string to the redmine ticket."""
+        """Create an HTML link string to the Redmine ticket."""
         link = f"{VeupathParams.redmine_url}/issues/{self.issue.id}"
         return f'<a href="{link}">{self.issue.id}</a>'
 
@@ -140,7 +140,7 @@ class RedmineIssue:
             return []
 
     def _get_build(self) -> str:
-        """Get the VeupathDB build from the issue."""
+        """Get the VEuPathDB build from the issue."""
         try:
             version = self.issue.fixed_version
             match = re.match(r"^Build (\d+)$", str(version))

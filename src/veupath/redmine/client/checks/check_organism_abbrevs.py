@@ -49,7 +49,7 @@ def get_genome_issues(redmine: VeupathRedmineClient) -> list:
 def categorize_abbrevs(
     issues: List[RedmineIssue], cur_abbrevs_path: Union[PathLike, None] = None
 ) -> Dict[str, List[Genome]]:
-    """Returns a dict of lists if genome issues depending on their categorization.
+    """Returns a dict of lists of genome issues depending on their categorization.
 
     Categories (might overlap):
         set_new = the issue has an abbrev already, and it is new

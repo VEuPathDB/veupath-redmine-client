@@ -203,7 +203,7 @@ class Genome(RedmineIssue):
             self.gff = gff_path
 
     def _get_replacement(self) -> None:
-        """Set `is_replacement` to true if the genome is expected to be a replacement."""
+        """Set `is_replacement` to True if the genome is expected to be a replacement."""
         try:
             replace = self.custom["Replacement genome?"]
         except KeyError:
@@ -241,7 +241,7 @@ class Genome(RedmineIssue):
         return summary
 
     def get_assembly_metadata(self, accession: str):
-        """Returns a metadata summary from entrez for the provided accession."""
+        """Returns a metadata summary from Entrez for the provided accession."""
         esummary_handle = Entrez.esummary(db="assembly", id=accession, report="full")
         esummary_record = Entrez.read(esummary_handle, validate=False)
         return esummary_record
@@ -256,7 +256,7 @@ class Genome(RedmineIssue):
         return False
 
     def _check_datatype(self) -> None:
-        """Checks if we expect an annotation with a gff from INSDC/GFF2Load."""
+        """Checks if we expect an annotation with a GFF from INSDC/GFF2Load."""
         if not self.insdc_metadata:
             return
         if "Load from EnsEMBL" in self.operations:
