@@ -233,7 +233,7 @@ class RNAseq(RedmineIssue):
                         norm_name = self._normalize_name(sample_name)
                         sample = {"name": norm_name, "accessions": accessions}
                         samples.append(sample)
-                    except SamplesParsingException as err:
+                    except SamplesParsingException:
                         sample_errors.append(f"sample name can't be normalized ({line})")
                         continue
                 else:
