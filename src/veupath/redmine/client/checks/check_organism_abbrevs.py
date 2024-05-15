@@ -86,7 +86,7 @@ def categorize_abbrevs(
             exp_organism = genome.experimental_organism
             try:
                 new_org = OrgsUtils.generate_abbrev(exp_organism)
-            except InvalidOrganism as exc:
+            except InvalidOrganism:
                 genome.organism_abbrev = ""
             else:
                 genome.organism_abbrev = new_org

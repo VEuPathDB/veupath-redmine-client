@@ -295,6 +295,5 @@ class RNAseq(RedmineIssue):
         name = re.sub(r"_+", "_", name)
         if re.search(NON_ASCII, name):
             raise SamplesParsingException(f"name contains special characters: {old_name} ({name})")
-            name = ""
 
         return name
