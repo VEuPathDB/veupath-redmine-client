@@ -231,11 +231,11 @@ class RNAseq(RedmineIssue):
                     norm_name = ""
                     try:
                         norm_name = self._normalize_name(sample_name)
-                        sample = {"name": norm_name, "accessions": accessions}
-                        samples.append(sample)
                     except SamplesParsingException:
                         sample_errors.append(f"sample name can't be normalized ({line})")
                         continue
+                    sample = {"name": norm_name, "accessions": accessions}
+                    samples.append(sample)
                 else:
                     sample_errors.append(f"sample line doesn't have 2 parts ({line})")
                     continue
