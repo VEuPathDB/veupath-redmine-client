@@ -86,10 +86,11 @@ def categorize_abbrevs(
             exp_organism = genome.experimental_organism
             try:
                 new_org = OrgsUtils.generate_abbrev(exp_organism)
-            except InvalidOrganism as exc:
-                raise ValueError(f"Issue {issue.issue.id} raised an error") from exc
-            genome.organism_abbrev = new_org
-            new_abbrev = True
+            except InvalidOrganism:
+                genome.organism_abbrev = ""
+            else:
+                genome.organism_abbrev = new_org
+                new_abbrev = True
 
         # Check that the format of the abbrev is valid
         try:

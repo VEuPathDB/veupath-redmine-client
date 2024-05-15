@@ -51,7 +51,7 @@ dependencies = [
 dev = [
     "black",
     "mypy",
-    "pylint",
+    "pylint >= 3.0.2",
 ]
 
 [project.urls]
